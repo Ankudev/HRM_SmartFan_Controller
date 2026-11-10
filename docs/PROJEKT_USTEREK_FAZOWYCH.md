@@ -1,6 +1,6 @@
 # Projekt: stopniowanie usterek fazowych
 
-Status: **projekt, nie wdrożony**. Wdrożenie dopiero po pomiarach H02, bo progi zależą od rzeczywistego przebiegu Z-C i opóźnień przerwań.
+Status: **wdrożony w wersji v2.1** (`Phase.h` / `Phase.cpp` oraz testy `T14`/`T15` w `tests/core_test.cpp`).
 
 ## Stan obecny
 

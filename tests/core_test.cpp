@@ -208,6 +208,22 @@ void rampAndBounds() {
     assert(hysteresis.tick(200, Drive::Ready).demand == 30);
     hysteresis.sample(1, 201, {101, Contact::Present});
     assert(hysteresis.tick(201, Drive::Ready).demand == 0);
+
+    // Asymetryczny filtr HR (Fast Attack / Slow Decay): szybkie wejście w strefę, wolne zejście.
+    Control asym;
+    Config asymCfg;
+    asymCfg.filterMs = 2000;
+    asymCfg.risePerSecond = 100;
+    asymCfg.fallPerSecond = 100;
+    asym.configure(asymCfg, true, testDrive);
+    asym.select(Mode::Auto);
+    asym.link(1);
+    hrPair(asym, 1, 100, 100);
+    assert(asym.tick(200, Drive::Ready).demand == 0);
+    asym.sample(1, 700, {115, Contact::Present});  // skok w górę: tau = 500 ms -> przekracza 105 BPM
+    assert(asym.tick(700, Drive::Ready).demand == 30);
+    asym.sample(1, 1200, {95, Contact::Present});  // spadek w dół: tau = 4000 ms -> trzyma strefę Z1
+    assert(asym.tick(1200, Drive::Ready).demand == 30);
     std::puts("PASS T07 T08 T10 T13 - zero, progi, histereza, limity i czas");
 }
 
@@ -240,10 +256,14 @@ void phaseTiming() {
     assert(!p.publish(next + 1, 0));
     assert(p.publish(next + 2, 40));
     assert(!p.alarm(old) && !p.gate() && !p.due());
-    assert(p.status(next + 12000) == Drive::Waiting);
-    assert(p.edge(next + 20000) && !p.due());
-    assert(p.status(next + 20000) == Drive::Fault);
-    for (unsigned i = 3; i <= 7; ++i) assert(p.edge(next + i * 10000) && !p.due());
+    // Pojedynczy brakujący impuls Z-C (20 ms <= 22 ms) podbija licznik miękki, ale utrzymuje Ready.
+    assert(p.status(next + 12000) == Drive::Ready);
+    assert(p.edge(next + 20000) && p.due() > 0 && p.softFaults() == 1);
+    assert(p.status(next + 20000) == Drive::Ready);
+    // Całkowity zanik Z-C (> 22 ms) natychmiast zatrzaskuje usterkę.
+    assert(p.edge(next + 45000) && !p.due());
+    assert(p.status(next + 45000) == Drive::Fault);
+    for (unsigned i = 1; i <= 4; ++i) assert(p.edge(next + 45000 + i * 10000) && !p.due());
 
     acquire(p, 0);
     assert(p.publish(30100, 50));
@@ -258,11 +278,31 @@ void phaseTiming() {
     assert(p.status(60500) == Drive::Fault);
     assert(!p.publish(60500, 50));
 
+    // Spóźniony alarm (> 100 us) pomija pojedynczy impuls, zanika po 100 czystych półokresach,
+    // a 4 błędy miękkie z rzędu zatrzaskują Drive::Fault.
     acquire(p, 0);
-    assert(p.publish(30001, 50));
-    assert(p.edge(40000));
+    uint64_t t = 30000;
+    assert(p.publish(t + 1, 50));
+    t += 10000;
+    assert(p.edge(t));
     assert(p.alarm(p.due() + 101));
-    assert(p.status(40500) == Drive::Fault && !p.gate());
+    assert(p.status(t + 500) == Drive::Ready && !p.gate() && p.softFaults() == 1);
+    for (unsigned i = 0; i < Phase::cleanDecayHalves; ++i) {
+        assert(p.publish(t + 1000, 50));
+        t += 10000;
+        assert(p.edge(t));
+        assert(p.alarm(p.due()) && p.gate());
+        assert(p.alarm(p.due()) && !p.gate());
+    }
+    assert(p.softFaults() == 0);
+    for (unsigned i = 1; i <= Phase::softFaultLimit; ++i) {
+        assert(p.publish(t + 1000, 50));
+        t += 10000;
+        assert(p.edge(t));
+        assert(p.alarm(p.due() + 101) && !p.gate());
+        assert(p.softFaults() == i);
+    }
+    assert(p.status(t + 500) == Drive::Fault && !p.publish(t + 500, 50));
 
     p.configure({});
     for (unsigned i = 0; i <= 5; ++i) {

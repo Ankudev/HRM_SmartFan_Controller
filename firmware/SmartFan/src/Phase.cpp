@@ -9,7 +9,8 @@ void Phase::configure(DriveProfile profile) {
 
 Drive Phase::status(uint64_t now) const {
     if (fault_ || (permitted_ && now - lastPermit_ >= leaseUs)) return Drive::Fault;
-    return intervals_ >= 3 && now - lastEdge_ <= maxHalfUs ? Drive::Ready : Drive::Waiting;
+    const uint64_t window = permitted_ ? maxBridgeUs : maxHalfUs;
+    return intervals_ >= 3 && now - lastEdge_ <= window ? Drive::Ready : Drive::Waiting;
 }
 
 void Phase::cancel() {
@@ -27,7 +28,7 @@ bool Phase::leaseValid(uint64_t now) {
 
 bool Phase::publish(uint64_t now, uint8_t demand) {
     leaseValid(now);
-    if (permitted_ && now - lastEdge_ > maxHalfUs) fault_ = true;
+    if (permitted_ && now - lastEdge_ > maxBridgeUs) fault_ = true;
     if (!demand || demand < profile_.minimum || demand > profile_.maximum ||
         !valid(profile_) || status(now) != Drive::Ready) {
         permitted_ = false;
@@ -46,10 +47,19 @@ bool Phase::publish(uint64_t now, uint8_t demand) {
 bool Phase::edge(uint64_t now) {
     const uint64_t half = now - lastEdge_;
     if (seenEdge_ && half < minHalfUs) return false;
-    if (!seenEdge_ || half > maxHalfUs) {
+    if (!seenEdge_ || half > maxBridgeUs) {
         intervals_ = 0;
         if (permitted_) fault_ = true;
         permitted_ = false;
+    } else if (half > maxHalfUs) {
+        cleanHalves_ = 0;
+        if (!permitted_ || intervals_ < 3) {
+            intervals_ = 0;
+        } else if (++softFaults_ >= softFaultLimit) {
+            intervals_ = 0;
+            fault_ = true;
+            permitted_ = false;
+        }
     } else if (intervals_ < 3) {
         ++intervals_;
     }
@@ -61,18 +71,29 @@ bool Phase::edge(uint64_t now) {
 }
 
 void Phase::timingFault() {
-    fault_ = true;
-    permitted_ = false;
     cancel();
+    cleanHalves_ = 0;
+    if (++softFaults_ >= softFaultLimit) {
+        fault_ = true;
+        permitted_ = false;
+    }
 }
 
 bool Phase::alarm(uint64_t now) {
     if (!due_ || now < due_) return false;
     if (gate_) {
         cancel();
+        if (softFaults_ && ++cleanHalves_ >= cleanDecayHalves) {
+            --softFaults_;
+            cleanHalves_ = 0;
+        }
     } else if (!leaseValid(now)) {
         cancel();
-    } else if (now - due_ > 100 || now - lastEdge_ + profile_.gateUs > 8700) {
+    } else if (now - lastEdge_ + profile_.gateUs > 8700) {
+        fault_ = true;
+        permitted_ = false;
+        cancel();
+    } else if (now - due_ > 100) {
         timingFault();
     } else {
         gate_ = true;

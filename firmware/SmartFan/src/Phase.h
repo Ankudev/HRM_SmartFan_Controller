@@ -15,7 +15,10 @@ class Phase {
 public:
     static constexpr uint32_t minHalfUs = 9000;
     static constexpr uint32_t maxHalfUs = 11000;
+    static constexpr uint32_t maxBridgeUs = 22000;
     static constexpr uint32_t leaseUs = 30000;
+    static constexpr uint8_t softFaultLimit = 4;
+    static constexpr uint8_t cleanDecayHalves = 100;
 
     void configure(DriveProfile profile);
     Drive status(uint64_t now) const;
@@ -25,6 +28,7 @@ public:
     void FAN_ISR timingFault();
     bool gate() const { return gate_; }
     uint64_t due() const { return due_; }
+    uint8_t softFaults() const { return softFaults_; }
 
 private:
     void FAN_ISR cancel();
@@ -36,6 +40,8 @@ private:
     uint64_t due_ = 0;
     uint16_t delay_ = 0;
     uint8_t intervals_ = 0;
+    uint8_t softFaults_ = 0;
+    uint8_t cleanHalves_ = 0;
     bool seenEdge_ = false;
     bool gate_ = false;
     bool permitted_ = false;

@@ -149,8 +149,13 @@ void Control::sample(uint32_t session, uint32_t now, HeartRate hr) {
     if (!good_ || !config_.filterMs) {
         filtered_ = hr.bpm;
     } else {
-        const float alpha = -std::expm1(-float(dt) / config_.filterMs);
-        filtered_ += (float(hr.bpm) - filtered_) * alpha;
+        // Asymetryczny filtr HR (Fast Attack / Slow Decay):
+        // 4x szybsza reakcja na wzrost tętna podczas interwału, 2x wolniejsze opadanie po wysiłku.
+        const float delta = float(hr.bpm) - filtered_;
+        const float tau = delta >= 0.0f ? std::max(1.0f, float(config_.filterMs) * 0.25f)
+                                        : float(config_.filterMs) * 2.0f;
+        const float alpha = -std::expm1(-float(dt) / tau);
+        filtered_ += delta * alpha;
     }
     if (good_ < 2) ++good_;
     measuredAt_ = now;
