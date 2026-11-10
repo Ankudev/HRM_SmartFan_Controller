@@ -13,7 +13,7 @@
 namespace fan::app {
 namespace {
 
-constexpr const char* fwVersion = "v2.3";
+constexpr const char* fwVersion = "v2.4";
 constexpr uint16_t dnsPort = 53;
 const IPAddress apIp(192, 168, 4, 1);
 const IPAddress netMask(255, 255, 255, 0);

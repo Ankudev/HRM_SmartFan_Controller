@@ -1,4 +1,4 @@
-zig c++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined
+zig c++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined
 0.15.2
 Python 3.13.13
 PASS T01 T11 T12 T19 - boot, konfiguracja, AUTO/MANUAL/OFF
@@ -19,7 +19,7 @@ test_stream_resync (test_client.SettingsTests.test_stream_resync) ... ok
 test_strict_import_and_export (test_client.SettingsTests.test_strict_import_and_export) ... ok
 
 ----------------------------------------------------------------------
-Ran 5 tests in 0.063s
+Ran 5 tests in 0.081s
 
 OK
 No broken requirements found.

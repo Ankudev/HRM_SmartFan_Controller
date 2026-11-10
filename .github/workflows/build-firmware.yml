@@ -51,3 +51,4 @@ jobs:
           files: |
             build_out/SmartFan_OTA.bin
             build_out/SmartFan_FullFlash_0x0.bin
+
