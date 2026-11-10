@@ -1,0 +1,14 @@
+Manifest materiałów referencyjnych: 15/15 SHA-256 i długości zgodne.
+{
+  "scope": "static source checks and Python model of selected logic; no hardware or firmware compilation",
+  "source_files_unchanged": 15,
+  "off_after_1000_steps_min30": 30,
+  "filtered_hr200_target": 95,
+  "filtered_hr201_target": 0,
+  "startup_target30_limit50_output": 95,
+  "modular_ble_cpp_identical_to_old_sketch": true,
+  "modular_ble_class_implementation_missing": true,
+  "validation_header_missing_in_both_sketch_directories": true,
+  "nimble_disconnect_signature_mismatch": true,
+  "static_client_callback_ownership_conflict": true
+}

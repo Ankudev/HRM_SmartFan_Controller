@@ -1,0 +1,8 @@
+zig c++ -fsanitize=address,undefined
+PASS T01 T11 T12 T19 - boot, konfiguracja, AUTO/MANUAL/OFF
+PASS T02 T03 - format HR, energia, RR, kontakt
+PASS T04 T05 T12 T16 - timeout, rollover, generacja i odrzut kolejki
+PASS T07 T08 T10 T13 - zero, progi, histereza, limity i czas
+PASS T14 T15 - filtr Z-C, synchronizacja, stary alarm, dzierzawa i 64-bit
+PASS T09 T17 T18 T20 - ramki, staging, powtorzenia, autoryzacja i model NVS
+PASS T06 - model 1100 nieudanych laczen z produkcyjnym backoff

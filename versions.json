@@ -1,0 +1,14 @@
+{
+  "arduinoCli": "1.4.1",
+  "core": "esp32:esp32@3.3.5",
+  "idfBundle": "idf-release_v5.5-9bb7aa84-v2",
+  "espToolchain": "2511",
+  "esp32Index": "https://espressif.github.io/arduino-esp32/package_esp32_index.json",
+  "libraries": ["NimBLE-Arduino@2.3.7", "LovyanGFX@1.2.19"],
+  "fqbn": "esp32:esp32:esp32s3:FlashMode=dio,FlashSize=8M,PSRAM=disabled,USBMode=hwcdc,CDCOnBoot=default,PartitionScheme=default_8MB",
+  "zig": "0.15.2",
+  "zigWindowsX64Sha256": "3a0ed1e8799a2f8ce2a6e6290a9ff22e6906f8227865911fb7ddedc3cc14cb0c",
+  "python": "3.13",
+  "pythonPatch": "3.13.13",
+  "bleak": "2.1.1"
+}

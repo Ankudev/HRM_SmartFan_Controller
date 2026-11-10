@@ -1,0 +1,40 @@
+xtensa-esp32s3-elf-objdump -t -C i -d -C --section=.iram0.text out/ac-hardware/build/SmartFan.ino.elf
+40375450 l     F .iram0.text	000000f4 (anonymous namespace)::onZeroCross(void*)
+40375544 l     F .iram0.text	00000108 (anonymous namespace)::onTimer(void*)
+4037564c g     F .iram0.text	0000008d fan::Phase::edge(unsigned long long)
+403756dc g     F .iram0.text	00000095 fan::Phase::alarm(unsigned long long)
+4037dc60 g     F .iram0.text	00000013 fan::Phase::timingFault()
+40375830 l     F .iram0.text	0000003a gpio_intr_service
+40382704 g     F .iram0.text	00000148 xPortEnterCriticalTimeout
+4038284c g     F .iram0.text	00000094 vPortExitCritical
+3fc9c598 l     O .dram0.data	00000008 (anonymous namespace)::phaseLock
+3fc9c560 l     O .dram0.data	00000038 (anonymous namespace)::phase
+Brak funkcji wyzwalania AC w ELF dry-run.
+40375450 l     F .iram0.text	000000f4 (anonymous namespace)::onZeroCross(void*)
+40375453:	fbeca1        	l32r	a10, 40374404 <_iram_text_start> (3fc9c598 <(anonymous namespace)::phaseLock>)
+40375458:	0d2aa5        	call8	40382704 <xPortEnterCriticalTimeout>
+4037545b:	fbeb71        	l32r	a7, 40374408 <_iram_text_start+0x4> (60020000 <TIMERG1>)
+4037547d:	fbe361        	l32r	a6, 4037440c <_iram_text_start+0x8> (3fc9c560 <(anonymous namespace)::phase>)
+4037548d:	001be5        	call8	4037564c <fan::Phase::edge(unsigned long long)>
+40375508:	087565        	call8	4037dc60 <fan::Phase::timingFault()>
+40375511:	fbbf81        	l32r	a8, 40374410 <_iram_text_start+0xc> (60004000 <GPIO>)
+4037551f:	fbb9a1        	l32r	a10, 40374404 <_iram_text_start> (3fc9c598 <(anonymous namespace)::phaseLock>)
+40375522:	0d32a5        	call8	4038284c <vPortExitCritical>
+40375544 l     F .iram0.text	00000108 (anonymous namespace)::onTimer(void*)
+40375547:	fbafa1        	l32r	a10, 40374404 <_iram_text_start> (3fc9c598 <(anonymous namespace)::phaseLock>)
+4037554c:	0d1b65        	call8	40382704 <xPortEnterCriticalTimeout>
+4037554f:	fbae71        	l32r	a7, 40374408 <_iram_text_start+0x4> (60020000 <TIMERG1>)
+40375585:	fba161        	l32r	a6, 4037440c <_iram_text_start+0x8> (3fc9c560 <(anonymous namespace)::phase>)
+40375595:	001465        	call8	403756dc <fan::Phase::alarm(unsigned long long)>
+40375610:	0864e5        	call8	4037dc60 <fan::Phase::timingFault()>
+40375619:	fb7d81        	l32r	a8, 40374410 <_iram_text_start+0xc> (60004000 <GPIO>)
+40375627:	fb77a1        	l32r	a10, 40374404 <_iram_text_start> (3fc9c598 <(anonymous namespace)::phaseLock>)
+4037562a:	0d2225        	call8	4038284c <vPortExitCritical>
+4037dc60 g     F .iram0.text	00000013 fan::Phase::timingFault()
+403756dc g     F .iram0.text	00000095 fan::Phase::alarm(unsigned long long)
+4037570d:	085665        	call8	4037dc74 <fan::Phase::leaseValid(unsigned long long)>
+40375750:	0850e5        	call8	4037dc60 <fan::Phase::timingFault()>
+4037564c g     F .iram0.text	0000008d fan::Phase::edge(unsigned long long)
+403756bd:	085b65        	call8	4037dc74 <fan::Phase::leaseValid(unsigned long long)>
+4037dc74 g     F .iram0.text	0000003e fan::Phase::leaseValid(unsigned long long)
+Sprawdzono 6 funkcji ścieżki AC.

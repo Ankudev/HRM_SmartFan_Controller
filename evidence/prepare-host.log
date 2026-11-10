@@ -1,0 +1,28 @@
+Zig SHA-256 3A0ED1E8799A2F8CE2A6E6290A9FF22E6906F8227865911FB7DDEDC3CC14CB0C
+0.15.2
+Requirement already satisfied: bleak==2.1.1 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 1)) (2.1.1)
+Requirement already satisfied: typing_extensions==4.16.0 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 2)) (4.16.0)
+Requirement already satisfied: winrt-runtime==4.1.0 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 3)) (4.1.0)
+Requirement already satisfied: winrt-Windows.Devices.Bluetooth==4!10.0.28000.2957 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 4)) (4!10.0.28000.2957)
+Requirement already satisfied: winrt-Windows.Devices.Bluetooth.Advertisement==4!10.0.28000.2957 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 5)) (4!10.0.28000.2957)
+Requirement already satisfied: winrt-Windows.Devices.Bluetooth.GenericAttributeProfile==4!10.0.28000.2957 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 6)) (4!10.0.28000.2957)
+Requirement already satisfied: winrt-Windows.Devices.Enumeration==4!10.0.28000.2957 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 7)) (4!10.0.28000.2957)
+Requirement already satisfied: winrt-Windows.Devices.Radios==4!10.0.28000.2957 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 8)) (4!10.0.28000.2957)
+Requirement already satisfied: winrt-Windows.Foundation==4!10.0.28000.2957 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 9)) (4!10.0.28000.2957)
+Requirement already satisfied: winrt-Windows.Foundation.Collections==4!10.0.28000.2957 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 10)) (4!10.0.28000.2957)
+Requirement already satisfied: winrt-Windows.Storage.Streams==4!10.0.28000.2957 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 11)) (4!10.0.28000.2957)
+
+[notice] A new release of pip is available: 26.0.1 -> 26.3
+[notice] To update, run: D:\APLIKACJE\HRM_SmartFan_v2\.local\venv\Scripts\python.exe -m pip install --upgrade pip
+No broken requirements found.
+bleak==2.1.1
+typing_extensions==4.16.0
+winrt-runtime==4.1.0
+winrt-Windows.Devices.Bluetooth==4!10.0.28000.2957
+winrt-Windows.Devices.Bluetooth.Advertisement==4!10.0.28000.2957
+winrt-Windows.Devices.Bluetooth.GenericAttributeProfile==4!10.0.28000.2957
+winrt-Windows.Devices.Enumeration==4!10.0.28000.2957
+winrt-Windows.Devices.Radios==4!10.0.28000.2957
+winrt-Windows.Foundation==4!10.0.28000.2957
+winrt-Windows.Foundation.Collections==4!10.0.28000.2957
+winrt-Windows.Storage.Streams==4!10.0.28000.2957

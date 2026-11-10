@@ -1,0 +1,19 @@
+usage: smartfan.py [-h] [--adres ADRES]
+                   {scan,get,set,import,export,defaults,validate} ...
+
+Konfigurator BLE HRM SmartFan v2 dla Windows.
+
+positional arguments:
+  {scan,get,set,import,export,defaults,validate}
+    scan                Wyszukaj sterowniki w trybie CONFIG
+    get                 Odczytaj utrwalone ustawienia
+    set                 Wyślij kompletną konfigurację, zapisz i zweryfikuj
+    import              Zaimportuj JSON, zapisz i zweryfikuj
+    export              Zapisz odczyt ustawień do nowego pliku
+    defaults            Zapisz szablon ustawień do nowego pliku
+    validate            Sprawdź plik lokalnie
+
+options:
+  -h, --help            show this help message and exit
+  --adres ADRES         Adres z polecenia scan, przy kilku sterownikach
+Poprawna konfiguracja v2.
