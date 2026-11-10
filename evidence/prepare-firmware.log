@@ -3,11 +3,11 @@ board_manager:
     additional_urls:
         - https://espressif.github.io/arduino-esp32/package_esp32_index.json
 build_cache:
-    path: D:\APLIKACJE\HRM_SmartFan_v2\.local\arduino-cache
+    path: .local\arduino-cache
 directories:
-    data: D:\APLIKACJE\HRM_SmartFan_v2\.local\arduino-data
-    downloads: D:\APLIKACJE\HRM_SmartFan_v2\.local\arduino-downloads
-    user: D:\APLIKACJE\HRM_SmartFan_v2\.local\arduino-user
+    data: .local\arduino-data
+    downloads: .local\arduino-downloads
+    user: .local\arduino-user
 
 
 Downloading index: library_index.tar.bz2 0 B / 4.46 MiB    0.00%

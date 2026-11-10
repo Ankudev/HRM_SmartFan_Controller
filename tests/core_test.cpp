@@ -71,7 +71,7 @@ void parser() {
     assert(parseHeartRate(optional, sizeof(optional), hr));
     assert(hr.bpm == 200 && hr.contact == Contact::Present);
     for (size_t i = 0; i < sizeof(optional); ++i) {
-        assert(parseHeartRate(optional, i, hr) == (i == 7));
+        assert(parseHeartRate(optional, i, hr) == (i >= 7));
     }
     const uint8_t absent[]{4, 123};
     const uint8_t unsupported[]{2, 123};
@@ -82,7 +82,7 @@ void parser() {
     assert(parseHeartRate(unsupported, sizeof(unsupported), hr) && usable(hr));
     assert(hr.contact == Contact::Unknown);
     assert(parseHeartRate(wide, sizeof(wide), hr) && hr.bpm == 299 && !usable(hr));
-    assert(!parseHeartRate(extra, sizeof(extra), hr));
+    assert(parseHeartRate(extra, sizeof(extra), hr) && hr.bpm == 80 && usable(hr));
     std::puts("PASS T02 T03 - format HR, energia, RR, kontakt");
 }
 
@@ -386,31 +386,9 @@ void protocol() {
     std::puts("PASS T09 T17 T18 T20 - ramki, staging, powtorzenia, autoryzacja i model NVS");
 }
 
-void lifecycleModel() {
-    Backoff backoff;
-    struct MockRadio {
-        unsigned live = 0, peak = 0, attempts = 0;
-        void create() { peak = std::max(peak, ++live); }
-        void connectFailure() { assert(live == 1); ++attempts; }
-    } mock;
-    mock.create();
-    uint32_t now = wrap - 500;
-    uint32_t pause = 1000;
-    for (int i = 0; i < 1100; ++i) {
-        assert(backoff.ready(now));
-        mock.connectFailure();
-        backoff.fail(now);
-        assert(!backoff.ready(now + pause - 1));
-        now += pause;
-        pause = std::min(pause * 2, uint32_t(30000));
-    }
-    assert(mock.attempts == 1100 && mock.peak == 1);
-    backoff.reset();
-    assert(backoff.ready(now));
-    std::puts("PASS T06 - model 1100 nieudanych laczen z produkcyjnym backoff");
-}
-
 } // namespace
+
+void radioTests();
 
 int main(int argc, char**) {
     if (argc > 1) {
@@ -426,5 +404,5 @@ int main(int argc, char**) {
     rampAndBounds();
     phaseTiming();
     protocol();
-    lifecycleModel();
+    radioTests();
 }

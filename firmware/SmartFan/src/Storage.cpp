@@ -4,6 +4,7 @@ namespace fan {
 
 bool Storage::begin() {
     ready_ = nvs_.begin("smartfan-v2", false);
+    if (ready_ && !nvs_.isKey("config")) save(Config{});
     return ready_;
 }
 

@@ -44,6 +44,7 @@ void controlTask(void*) {
     Button pair, config;
     ConfigView loaded{};
     RadioView radio{};
+    Snapshot lastSnapshot{};
     uint32_t link = 0;
     bool bootButtonsReleased = false;
     const auto enter = [&](Mode mode, uint32_t now) {
@@ -118,8 +119,26 @@ void controlTask(void*) {
             else if (c == Button::Tap) enter(Mode::Manual, now);
         }
 
+        UiCommand cmd{};
+        if (bootButtonsReleased && uiCommand && xQueueReceive(uiCommand, &cmd, 0) == pdTRUE) {
+            if (cmd.action == UiAction::SetMode) {
+                if (cmd.mode == Mode::Off || !configBusy.load()) enter(cmd.mode, now);
+            } else if (cmd.action == UiAction::SetManual && !configBusy.load()) {
+                if (request.mode != Mode::Manual) enter(Mode::Manual, now);
+                const uint16_t clamped = cmd.value > 100 ? 100 : cmd.value;
+                control.changeManual(int(clamped) - int(lastSnapshot.manual));
+            } else if (cmd.action == UiAction::PairSelect && request.mode == Mode::Pair &&
+                       radio.epoch == request.epoch && radio.count > 0 && cmd.value < radio.count &&
+                       (radio.state == RadioState::Choose || radio.state == RadioState::PairFailed)) {
+                const uint32_t delta = (uint32_t(cmd.value) + radio.count - radio.index) % radio.count;
+                request.next += delta;
+                ++request.confirm;
+            }
+        }
+
         const bool initialized = driverReady && uiReady.load() && radioReady.load();
         const auto snapshot = control.tick(now, initialized ? driver::status() : Drive::Fault);
+        lastSnapshot = snapshot;
         if (snapshot.mode != request.mode) {
             request.mode = snapshot.mode;
             request.since = now;

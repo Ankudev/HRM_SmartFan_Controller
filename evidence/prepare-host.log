@@ -13,7 +13,7 @@ Requirement already satisfied: winrt-Windows.Foundation.Collections==4!10.0.2800
 Requirement already satisfied: winrt-Windows.Storage.Streams==4!10.0.28000.2957 in .\.local\venv\Lib\site-packages (from -r client/requirements-windows.txt (line 11)) (4!10.0.28000.2957)
 
 [notice] A new release of pip is available: 26.0.1 -> 26.3
-[notice] To update, run: D:\APLIKACJE\HRM_SmartFan_v2\.local\venv\Scripts\python.exe -m pip install --upgrade pip
+[notice] To update, run: .\.local\venv\Scripts\python.exe -m pip install --upgrade pip
 No broken requirements found.
 bleak==2.1.1
 typing_extensions==4.16.0

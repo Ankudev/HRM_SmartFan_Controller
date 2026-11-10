@@ -131,6 +131,7 @@ void ConfigBle::read(const Fragment& fragment, const Request& initial) {
             ConfigView config{};
             config.valid = storage_.load(config.config);
             xQueueOverwrite(configInput, &config);
+            if (activeConfigView) xQueueOverwrite(activeConfigView, &config);
         }
         for (size_t offset = 0; offset < reply.size; offset += 20) {
             xQueuePeek(radioRequest, &request, 0);
@@ -173,6 +174,8 @@ void ConfigBle::tick(const Request& request, RadioView& view) {
 
     if (!active_) {
         if (!closed()) return;
+        NimBLEDevice::setSecurityAuth(true, true, true);
+        NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_ONLY);
         active_ = true;
         epoch_ = request.epoch;
         lastAdvertise_ = now - 1000;

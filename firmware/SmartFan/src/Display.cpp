@@ -146,14 +146,24 @@ void displayUpdate() {
         sprite.drawString(radioText(radio.state), 120, 142, &lgfx::fonts::Font2);
     }
     sprite.setTextColor(TFT_YELLOW);
-    sprite.drawString(reasonText(state.reason), 120, 175, &lgfx::fonts::Font2);
+    sprite.drawString(reasonText(state.reason), 120, 168, &lgfx::fonts::Font2);
+    sprite.setTextColor(TFT_LIGHTGREY);
+    if (state.mode == Mode::Off) {
+        sprite.drawString("PAIR:Auto  CFG:Manual", 120, 190, &lgfx::fonts::Font0);
+    } else if (state.mode == Mode::Manual) {
+        sprite.drawString("PAIR:Off  CFG:+5/przytrz.-5", 120, 190, &lgfx::fonts::Font0);
+    } else if (state.mode == Mode::Auto) {
+        sprite.drawString("PAIR:Off  WiFi:SmartFan", 120, 190, &lgfx::fonts::Font0);
+    } else {
+        sprite.drawString("WiFi: SmartFan 192.168.4.1", 120, 190, &lgfx::fonts::Font0);
+    }
 #if FAN_AC_HARDWARE
     constexpr char profile[] = "AC";
 #else
     constexpr char profile[] = "DRY-RUN";
 #endif
     std::snprintf(text, sizeof(text), "%s %.12s", profile, FAN_BUILD_ID);
-    sprite.drawString(text, 120, 202, &lgfx::fonts::Font0);
+    sprite.drawString(text, 120, 208, &lgfx::fonts::Font0);
     sprite.pushSprite(0, 0);
 }
 

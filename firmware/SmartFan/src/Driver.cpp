@@ -75,9 +75,11 @@ bool begin() {
     gpio_config_t zeroConfig{};
     zeroConfig.pin_bit_mask = 1ULL << board::zeroCross;
     zeroConfig.mode = GPIO_MODE_INPUT;
+    zeroConfig.pull_up_en = GPIO_PULLUP_ENABLE;
     zeroConfig.intr_type = board::drive.fallingEdge ? GPIO_INTR_NEGEDGE : GPIO_INTR_POSEDGE;
     if (gpio_config(&zeroConfig) != ESP_OK) return false;
-    if (gpio_install_isr_service(ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_LEVEL1) != ESP_OK) return false;
+    const auto isrErr = gpio_install_isr_service(ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_LEVEL1);
+    if (isrErr != ESP_OK && isrErr != ESP_ERR_INVALID_STATE) return false;
 
     // Nie resetować grupy, bo może zawierać systemowy watchdog.
     periph_module_enable(PERIPH_TIMG1_MODULE);
@@ -113,7 +115,9 @@ Drive status() {
 void publish(uint8_t demand) {
     if (!initialized) return;
     portENTER_CRITICAL(&phaseLock);
-    if (!phase.publish(nowUs(), demand)) applyAlarm();
+    const uint64_t now = nowUs();
+    if (!demand && phase.status(now) == Drive::Fault) phase.configure(board::drive);
+    if (!phase.publish(now, demand)) applyAlarm();
     portEXIT_CRITICAL(&phaseLock);
 }
 

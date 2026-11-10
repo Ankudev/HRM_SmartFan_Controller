@@ -1,6 +1,6 @@
 # Sprzęt i odbiór
 
-ESP32-S3-WROOM-1, GC9A01 240 × 240 SPI, pas Garmin HRM-Pro Plus lub inne zgodne HRS, regulator RobotDyn Z-C/PSM i wentylator użytkownika 220–240 V, około 60 W, 50 Hz.
+Układ docelowy obejmuje moduł ESP32-S3-WROOM-1, okrągły wyświetlacz GC9A01 240 x 240 SPI, pas tętna Garmin HRM-Pro Plus (lub inny zgodny ze standardem HRS), regulator fazowy RobotDyn Z-C/PSM oraz wentylator sieciowy 220-240 V, około 60 W, 50 Hz.
 
 | Sygnał | GPIO |
 |---|---:|
@@ -10,32 +10,34 @@ ESP32-S3-WROOM-1, GC9A01 240 × 240 SPI, pas Garmin HRM-Pro Plus lub inne zgodne
 | LED | 13 |
 | PAIR / CONFIG | 12 / 16 |
 
-Przyciski są aktywne stanem niskim z podciąganiem wejść. Referencyjny build odpowiada ogólnemu `ESP32S3 Dev Module` i zakłada 8 MB flash, DIO 80 MHz, bez PSRAM, USB Hardware CDC/JTAG, CDC on boot wyłączone, partycje `default_8MB`. W tej mapie sygnały omijają GPIO19/20 dla USB, piny pamięci SPI i piny strap ESP32-S3. Zweryfikuj oznaczenie rzeczywistej płytki, okablowanie i funkcje dodatkowe przed wgraniem. Traktuj GPIO jako sygnały 3,3 V. Sprawdź poziom, polaryzację i izolację Z-C oraz wymagania wejścia PSM konkretnego modułu. Zapewnij sprzętowy stan spoczynkowy wejścia PSM podczas resetu i startu ESP32. [ESP32-S3-DevKitC-1](https://documentation.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide.html), [dokumentacja ESP32-S3](https://documentation.espressif.com/esp32_s3_datasheet_en.pdf), [RobotDyn RBDDimmer](https://github.com/RobotDynOfficial/RBDDimmer).
+Przyciski skonfigurowałem jako aktywne stanem niskim z wewnętrznym podciąganiem wejść (`INPUT_PULLUP`). Referencyjny build odpowiada profilowi `ESP32S3 Dev Module` i zakłada 8 MB pamięci flash, tryb DIO 80 MHz, wyłączoną pamięć PSRAM, interfejs USB Hardware CDC/JTAG, wyłączoną opcję CDC on boot oraz schemat partycji `default_8MB`. W przyjętej przeze mnie mapie wyprowadzeń sygnały omijają linie GPIO19/20 (zarezerwowane dla USB), piny pamięci SPI oraz piny strappingowe ESP32-S3. Przed wgraniem oprogramowania na fizyczną płytkę weryfikuję jej dokładne oznaczenie, okablowanie oraz ewentualne funkcje dodatkowe na pinach. Wszystkie linie GPIO pracują w logice 3,3 V. Przed podłączeniem modułu wykonawczego sprawdzam poziom napięcia, polaryzację i izolację galwaniczną sygnału Z-C oraz wymagania prądowo-napięciowe wejścia PSM. Po stronie sprzętowej należy też zapewnić bezpieczny stan spoczynkowy wejścia PSM podczas resetu i uruchamiania mikrokontrolera ESP32. Dokumentacja referencyjna: [ESP32-S3-DevKitC-1](https://documentation.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide.html), [nota katalogowa ESP32-S3](https://documentation.espressif.com/esp32_s3_datasheet_en.pdf), [RobotDyn RBDDimmer](https://github.com/RobotDynOfficial/RBDDimmer).
 
 ## Profile
 
-- `dry-run` daje symulowane wyjście. Przyjmuje realne notyfikacje HR. Testy hostowe dostarczają sztuczne HR i Z-C bez sprzętu.
-- `ac-hardware` używa rzeczywistego Z-C i sprzętowego timera, a obecny profil w `Board.h` jest pusty. Parametry min/max, opcjonalnego rozruchu, wybranego zbocza, przesunięcia i impulsu muszą wynikać z odbioru modułu oraz napędu. Po ich wpisaniu profil wymaga `approved=true`, walidacji i świadomego wyboru AUTO lub MANUAL po starcie. Pusty lub niepoprawny profil utrzymuje PSM nisko.
+- Profil `dry-run` wystawia wyłącznie symulowane wyjście, ale przyjmuje rzeczywiste notyfikacje HR z pasa BLE. W testach hostowych dostarczam sztuczne przebiegi HR oraz Z-C bez udziału sprzętu.
+- Profil `ac-hardware` korzysta z fizycznego wejścia Z-C oraz sprzętowego timera, jednak domyślna struktura profilu w pliku `Board.h` jest celowo pusta. Parametry `min`/`max`, opcjonalnego rozruchu, wybranego zbocza, przesunięcia czasowego i szerokości impulsu muszę wyznaczyć podczas pomiarów konkretnego modułu oraz silnika. Po ich wpisaniu profil wymaga ustawienia flagi `approved=true`, pomyślnej walidacji oraz świadomego wyboru trybu AUTO lub MANUAL po starcie. Pusty lub niepoprawny profil utrzymuje wyjście PSM w stanie niskim.
 
-Zależność nastawa→opóźnienie jest liniowa wewnątrz zatwierdzonego zakresu. Minimum odpowiada `latestUs`, maksimum `earliestUs`. Jeśli oba krańce nastawy są równe, jedyna nastawa używa `latestUs`. Początek fazy jest liczony od zaakceptowanego zbocza. `earliestUs ≥ 250`, `latestUs > earliestUs`, szerokość impulsu 40–500 µs, suma `latestUs + gateUs ≤ 8600 µs`. Są to ograniczenia implementacji i budżet półokresu. Charakterystyka modułu, przesunięcie detekcji i zachowanie napędu wymagają pomiaru.
+Zależność pomiędzy nastawą a opóźnieniem wyzwalania (`nastawa -> opóźnienie`) jest liniowa wewnątrz zatwierdzonego zakresu roboczego. Nastawa minimalna odpowiada wartości `latestUs`, a maksymalna wartości `earliestUs`. Jeśli oba krańce zakresu są równe, jedyna dostępna nastawa korzysta z opóźnienia `latestUs`. Początek fazy liczę od zaakceptowanego zbocza Z-C. Obowiązują następujące ograniczenia implementacyjne w ramach budżetu półokresu sieci 50 Hz: `earliestUs >= 250`, `latestUs > earliestUs`, szerokość impulsu `gateUs` w przedziale `40-500 us` oraz suma `latestUs + gateUs <= 8600 us`. Rzeczywistą charakterystykę modułu, przesunięcie detekcji zera oraz zachowanie samego napędu wyznaczam pomiarowo.
 
-## H01 — sterownik bez zasilania części AC
+## H01 - sterownik bez zasilania części AC
 
-1. Potwierdzić wariant płytki, flash, USB, mapę GPIO i ustawienia ekranu. Zarejestrować identyfikator obrazu.
-2. W `dry-run` sprawdzić boot OFF, oba przyciski, stan ekranu, konfigurację od pustego NVS i zapis po restarcie.
-3. Sprawdzić skan przy kilku pasach, wybór, brak kontaktu, rozłączenie, reconnect, timeout 5 s i dwie próbki. W MANUAL odpiąć pas, a w OFF odtworzyć reconnect.
-4. W Windows sprawdzić parowanie PIN, klienta obcego, próbę z błędnym PIN, usunięcie parowań, wygaśnięcie okna, rozłączenie CLOSE, ponowne szyfrowanie linku i GET po SAVE. Powtórzyć przy ATT MTU 23, o ile stanowisko pozwala go wymusić.
-5. Odczytać wolną pamięć i zapas stosu przy skanie, reconnect oraz konfiguracji. Sprawdzić zerwanie linku i restart podczas SAVE na urządzeniu testowym.
+Szczegółowy arkusz wykonawczy z oczekiwanymi wynikami i tabelą pomiarów `diag` znajduje się w pliku [H01_PROTOKOL.md](H01_PROTOKOL.md).
 
-## H02 — Z-C/PSM na stanowisku pomiarowym
+1. Potwierdzam dokładny wariant płytki, rozmiar pamięci flash, działanie portu USB, mapę GPIO oraz konfigurację ekranu. Zapisuję identyfikator wgranego obrazu.
+2. W profilu `dry-run` sprawdzam start w trybie OFF, reakcję na oba przyciski, wskazania ekranu, blokadę przy pustym NVS oraz zachowanie zapisanej konfiguracji po restarcie.
+3. Testuję skanowanie przy kilku pasach BLE w zasięgu, wybór pasa z listy, obsługę utraty kontaktu ze skórą, rozłączenie, procedurę reconnect, timeout 5 s oraz wymóg odebrania dwóch świeżych próbek. W trybie MANUAL odpinam pas w trakcie pracy, a w trybie OFF weryfikuję samoczynny reconnect w tle.
+4. Na komputerze z Windows sprawdzam parowanie kodem PIN, odrzucenie nieautoryzowanego klienta, próbę parowania z błędnym kodem PIN, kasowanie parowań przyciskiem, wygaśnięcie okna CONFIG, zamknięcie sesji komendą `CLOSE`, wznowienie szyfrowanego połączenia oraz odczyt kontrolny `GET` po `SAVE`. Jeśli stanowisko na to pozwala, powtarzam próbę przy wymuszonym rozmiarze ATT MTU równym 23.
+5. Odczytuję wolną stertę RAM oraz zapas stosów zadań podczas skanowania, wznawiania połączenia i zapisu konfiguracji. Na urządzeniu testowym sprawdzam też zachowanie przy celowym zerwaniu połączenia oraz restarcie zasilania w trakcie operacji `SAVE`.
 
-1. Na sygnałach testowych potwierdzić czas 10 ms pomiędzy właściwymi zboczami Z-C, przesunięcie i polaryzację. Z pustym profilem AC potwierdzić brak impulsów.
-2. Z profilem pomiarowym i bez podłączonego silnika sprawdzić oscyloskopem nastawy krańcowe i pośrednie, szerokość impulsu, odstęp od końca półokresu oraz brak impulsów podczas boot/reset i OFF. Ustalić wpływ Z-C na rzeczywisty punkt wyzwalania.
-3. Dodać zbyt bliskie zbocza, brakujące półokresy i zatrzymanie zadania sterowania przy działających ISR. Wyzwolić OFF przed zaplanowanym alarmem i podczas impulsu. Zmierzyć czas do ostatniego PSM oraz sprawdzić brak wznowienia po usterce bez resetu i świadomego wyboru.
-4. Powtórzyć przy pracy BLE i odświeżaniu ekranu. Sprawdzić, czy sterownik pozostaje OFF podczas CONFIG i przy błędach inicjalizacji. Docelowy czas zadziałania fizycznego OFF do PSM to maks. 35 ms od stabilnego naciśnięcia. Jest to kryterium do pomiaru.
+## H02 - Z-C/PSM na stanowisku pomiarowym
 
-## H03 — odbiór napędu
+1. Na bezpiecznych sygnałach testowych potwierdzam okres 10 ms pomiędzy kolejnymi właściwymi zboczami Z-C, przesunięcie fazowe oraz polaryzację sygnału. Przy pustym profilu AC potwierdzam całkowity brak impulsów na wyjściu PSM.
+2. Po wgraniu profilu pomiarowego (nadal bez podłączonego silnika) sprawdzam na oscyloskopie nastawy skrajne i pośrednie, szerokość impulsu bramkującego, margines czasu przed końcem półokresu oraz brak jakichkolwiek impulsów podczas startu, resetu i w trybie OFF. Wyznaczam wpływ kształtu sygnału Z-C na rzeczywisty moment wyzwalania.
+3. Wstrzykuję zakłócenia: zbyt bliskie zbocza, brakujące półokresy oraz celowe zatrzymanie zadania sterowania przy działających przerwaniach ISR. Wyzwalając fizyczne OFF tuż przed zaplanowanym alarmem oraz w trakcie trwania impulsu, mierzę czas do opadnięcia linii PSM i weryfikuję, że po usterce fazowej układ nie wznawia pracy bez pełnego resetu i świadomego wyboru trybu.
+4. Powtarzam pomiary przy jednoczesnej komunikacji BLE i odświeżaniu ekranu. Potwierdzam, że wyjście pozostaje wyłączone w trybie CONFIG oraz po wymuszeniu błędów inicjalizacji. Docelowy czas od stabilnego naciśnięcia przycisku OFF do wygaszenia linii PSM wynosi maksymalnie 35 ms (kryterium weryfikowane oscyloskopem). Zebrane rozkłady opóźnień i zakłóceń Z-C posłużą do decyzji o ewentualnym wdrożeniu stopniowania usterek opisanego w [PROJEKT_USTEREK_FAZOWYCH.md](PROJEKT_USTEREK_FAZOWYCH.md).
 
-Zidentyfikować model i rodzaj silnika oraz potwierdzić dopuszczalność regulacji fazowej. Zmierzyć skuteczność rozruchu na zimno i ciepło, pracę przy minimum i krańcach zakresu, prąd oraz temperaturę w długim cyklu. Ustalić warunki i parametry zatwierdzenia profilu. Sprawdzić utratę HR i zasilania w trakcie treningu. Udokumentować wyniki, urządzenia pomiarowe i wersję obrazu.
+## H03 - odbiór napędu
 
-Programowe OFF wygasza wyzwalanie. Triak może przewodzić do chwili spadku prądu poniżej prądu podtrzymania. Zwarcie triaka, awaria procesora, reset lub uszkodzenie okablowania mogą wymagać niezależnego zabezpieczenia sprzętowego. Układ bez dodatkowych czujników nie mierzy obrotów ani temperatury silnika.
+Identyfikuję dokładny model i typ silnika wentylatora oraz potwierdzam, że producent dopuszcza jego regulację fazową. Mierzę skuteczność rozruchu na zimno i na ciepło, stabilność pracy przy nastawie minimalnej i na krańcach zakresu, pobór prądu oraz temperaturę uzwojeń w długim cyklu pracy. Na tej podstawie ustalam bezpieczne parametry zatwierdzonego profilu sprzętowego. Sprawdzam zachowanie układu po utracie sygnału HR oraz po zaniku zasilania w trakcie treningu, dokumentując wyniki, użyte przyrządy pomiarowe i identyfikator obrazu firmware'u.
+
+Programowe przejście w tryb OFF natychmiast wygasza generowanie impulsów bramkujących, jednak sam triak w stopniu wykonawczym przewodzi prąd do momentu naturalnego spadku poniżej prądu podtrzymania przy kolejnym przejściu przez zero. Zwarcie struktury triaka, awaria mikrokontrolera, nieoczekiwany reset lub uszkodzenie okablowania wymagają zastosowania niezależnego zabezpieczenia sprzętowego (np. bezpiecznika topikowego i wyłącznika fizycznego). Układ w obecnej architekturze nie posiada dodatkowych czujników i nie mierzy prędkości obrotowej ani temperatury silnika.

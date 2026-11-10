@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/Environment.ps1"
 Set-Location $Root
 $tool = Join-Path $env:ARDUINO_DIRECTORIES_DATA "packages/esp32/tools/esp-x32/$($Versions.espToolchain)/bin/xtensa-esp32s3-elf-objdump.exe"

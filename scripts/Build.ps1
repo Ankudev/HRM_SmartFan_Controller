@@ -12,6 +12,14 @@ $sha = [Security.Cryptography.SHA256]::Create()
 try { $sourceId = ([BitConverter]::ToString($sha.ComputeHash($inputBytes))).Replace('-', '').ToLowerInvariant() }
 finally { $sha.Dispose() }
 
+# __DATE__/__TIME__ w chip-debug-report.cpp rdzenia psuje powtarzalnosc ELF. GCC bierze je z
+# SOURCE_DATE_EPOCH, wiec ustawiam czas ostatniego commita (bez gita: 0, czyli 1 stycznia 1970).
+$epoch = if (Get-Command git -ErrorAction SilentlyContinue) { git -C $Root log -1 --format=%ct 2>$null }
+$env:SOURCE_DATE_EPOCH = if ("$epoch" -match '^\d+$') { "$epoch" } else { '0' }
+# Wlasne flagi ida do compiler.*.extra_flags (puste w platform.txt). Nadpisanie build.extra_flags
+# usuwaloby definicje plytki: ESP32, ARDUINO_USB_MODE, ARDUINO_USB_CDC_ON_BOOT, CORE_DEBUG_LEVEL.
+$prefixMap = "`"-ffile-prefix-map=$($Root.Replace('\','/'))=.`""
+
 $profiles = if ($Profile -eq 'both') { @('dry-run','ac-hardware') } else { @($Profile) }
 foreach ($current in $profiles) {
     $ac = [int]($current -eq 'ac-hardware')
@@ -21,10 +29,12 @@ foreach ($current in $profiles) {
     New-Item -Force -ItemType Directory $folder,$evidence | Out-Null
     $build = Join-Path $folder build
     $log = Join-Path $evidence "build-$current.log"
-    "Build=$id FQBN=$($Versions.fqbn)" | Set-Content $log -Encoding utf8
+    "Build=$id FQBN=$($Versions.fqbn) SOURCE_DATE_EPOCH=$env:SOURCE_DATE_EPOCH" | Set-Content $log -Encoding utf8
     $sourceHashes | Set-Content (Join-Path $folder SOURCE-SHA256.txt) -Encoding ascii
-    $flags = "-DFAN_AC_HARDWARE=$ac -DFAN_BUILD_ID=`"$id`""
-    Invoke-Arduino compile --clean --jobs 6 --warnings default --fqbn $Versions.fqbn --build-path $build --build-property "build.extra_flags=$flags" (Join-Path $Root firmware/SmartFan) |
+    $flags = "-DFAN_AC_HARDWARE=$ac -DFAN_BUILD_ID=`"$id`" $prefixMap"
+    Invoke-Arduino compile --clean --jobs 6 --warnings default --fqbn $Versions.fqbn --build-path $build `
+        --build-property "compiler.cpp.extra_flags=$flags" --build-property "compiler.c.extra_flags=$prefixMap" `
+        (Join-Path $Root firmware/SmartFan) |
         Tee-Object -FilePath $log -Append
 
     $artifacts = Get-ChildItem -File $build | Where-Object { $_.Name -match '^SmartFan\.ino\.(.*\.bin|bin|elf|map)$' }

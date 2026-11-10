@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $Root = Split-Path $PSScriptRoot -Parent
 $Versions = Get-Content (Join-Path $Root versions.json) -Raw | ConvertFrom-Json
 $Local = Join-Path $Root .local

@@ -82,14 +82,14 @@ bool valid(const DriveProfile& p) {
 }
 
 bool parseHeartRate(const uint8_t* data, size_t size, HeartRate& result) {
-    if (size < 2) return false;
+    if (!data || size < 2) return false;
     const uint8_t flags = data[0];
     const bool wide = flags & 1;
     const size_t hrEnd = wide ? 3 : 2;
     const size_t fixedEnd = hrEnd + ((flags & 8) ? 2 : 0);
     if (size < fixedEnd) return false;
     const size_t remaining = size - fixedEnd;
-    if ((flags & 16) ? (remaining == 0 || (remaining & 1)) : remaining != 0) return false;
+    if ((flags & 16) && remaining < 2) return false;
     result.bpm = wide ? read16(data + 1) : data[1];
     result.contact = !(flags & 4) ? Contact::Unknown : ((flags & 2) ? Contact::Present : Contact::Absent);
     return true;

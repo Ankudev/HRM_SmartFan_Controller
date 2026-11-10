@@ -1,26 +1,16 @@
-dry-run Build=fbb62f30dcf-0 FQBN=esp32:esp32:esp32s3:FlashMode=dio,FlashSize=8M,PSRAM=disabled,USBMode=hwcdc,CDCOnBoot=default,PartitionScheme=default_8MB
-
-InputObject                                                                               SideIndicator
------------                                                                               -------------
-8b325aee0efa2638c296491c5d5d797a87dbe45cf2c319dfddb7ad8f67bf4b40  SmartFan.ino.bin        =>
-4a571fe61355f513fb59a9611716a0c6d7b482240b7a089e0ebc66ee491b5e15  SmartFan.ino.elf        =>
-78ef24b4ef71cb08552f31be14dd72d7fe677d72fc68c329b9d08efc40b38e17  SmartFan.ino.merged.bin =>
-369eb4d5bad0a4e00ef3cde2f5313930c46ff359ab452215bdcb559f8b30047b  SmartFan.ino.bin        <=
-2f6a3eaaf622b9a92962b9c4cb2aa316c9ef538ddb33c74f13cdbac50a49d5b0  SmartFan.ino.elf        <=
-19f594d15e23764981ef4ca4ecdbde3c4df3608e3595b5324c997e1dd2ace2c8  SmartFan.ino.merged.bin <=
-
-
-Identyfikator w obrazie: fbb62f30dcf-0
-ac-hardware Build=fbb62f30dcf-1 FQBN=esp32:esp32:esp32s3:FlashMode=dio,FlashSize=8M,PSRAM=disabled,USBMode=hwcdc,CDCOnBoot=default,PartitionScheme=default_8MB
-
-InputObject                                                                               SideIndicator
------------                                                                               -------------
-aedd1407e67fccffc4f506a11f34443d7d7617c6129deb92374d13dccb8ee31e  SmartFan.ino.bin        =>
-11fd381613f3525647316f39ee329d8b35dc565173f98e55c649514e895e028c  SmartFan.ino.elf        =>
-01a4bc157e3131eafb7c61e63b5708d1e3c047f5c135d4481ab602be7869fdb4  SmartFan.ino.merged.bin =>
-6c0eda429e4f10fd38aaf237ac69efe421b12c64db0af297bf0eeef839094ef2  SmartFan.ino.bin        <=
-4a64dfd0e2a5deff9bdf6c012e3845d38ed33f8987e3b936c6cafad99ad96bc5  SmartFan.ino.elf        <=
-5bc91075d5bf8b3c304b25f0ce4a079a3ab3eeae98e14a1dbb730dfeca64ba8d  SmartFan.ino.merged.bin <=
-
-
-Identyfikator w obrazie: fbb62f30dcf-1
+Build=2acea304885-0 FQBN=esp32:esp32:esp32s3:FlashMode=dio,FlashSize=8M,PSRAM=disabled,USBMode=hwcdc,CDCOnBoot=default,PartitionScheme=default_8MB SOURCE_DATE_EPOCH=1794002298
+IDENTYCZNE dry-run
+555b1f437c92a453cca8f7b3525c1e674e83853ee6ae15efe40d1dd720b132f4  SmartFan.ino.bin
+e639a9dd3efdff54a33326ffd8c8ac4cae4807ba4d32ceb5c7d9490f65411bac  SmartFan.ino.bootloader.bin
+adbdb6e6b7b5ca659c1f822f7ce2bf5e7d0d1215e837f5be61745dc922bd9fe5  SmartFan.ino.elf
+ffcdfe90fd50a2375f33aaaa050f85fe0e4028fc242c1deeff3fdf9d88ea6ea5  SmartFan.ino.map
+86cd10fe2c0a888b00630d8ebb665661e29e6a409299f2b14e2e6f369b53edc9  SmartFan.ino.merged.bin
+1d9cca96de0fe07ad7fc0648b9878ddecd9ce565e38b589ad20fea698ed4c80c  SmartFan.ino.partitions.bin
+Build=2acea304885-1 FQBN=esp32:esp32:esp32s3:FlashMode=dio,FlashSize=8M,PSRAM=disabled,USBMode=hwcdc,CDCOnBoot=default,PartitionScheme=default_8MB SOURCE_DATE_EPOCH=1794002298
+IDENTYCZNE ac-hardware
+d3202e0433d031ac1155d22d8193d75506de9039720f15a23d8c21d05e50f295  SmartFan.ino.bin
+e639a9dd3efdff54a33326ffd8c8ac4cae4807ba4d32ceb5c7d9490f65411bac  SmartFan.ino.bootloader.bin
+7a7e153cebf15538bf062a67905c58b3a0715dc15042813ce0b537336b86ee37  SmartFan.ino.elf
+4c9c98e60ec7c0483e27f0a34c0626f30002075f6524eed51244ee738b1d15ac  SmartFan.ino.map
+ce162fa56e8d5138fd40dd7ffd5dfac1feb97c3a732054890a42d85e98d83003  SmartFan.ino.merged.bin
+1d9cca96de0fe07ad7fc0648b9878ddecd9ce565e38b589ad20fea698ed4c80c  SmartFan.ino.partitions.bin

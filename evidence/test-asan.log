@@ -1,8 +1,25 @@
-zig c++ -fsanitize=address,undefined
+zig c++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined
+0.15.2
+Python 3.13.13
 PASS T01 T11 T12 T19 - boot, konfiguracja, AUTO/MANUAL/OFF
 PASS T02 T03 - format HR, energia, RR, kontakt
 PASS T04 T05 T12 T16 - timeout, rollover, generacja i odrzut kolejki
 PASS T07 T08 T10 T13 - zero, progi, histereza, limity i czas
 PASS T14 T15 - filtr Z-C, synchronizacja, stary alarm, dzierzawa i 64-bit
 PASS T09 T17 T18 T20 - ramki, staging, powtorzenia, autoryzacja i model NVS
-PASS T06 - model 1100 nieudanych laczen z produkcyjnym backoff
+PASS R01 R02 - start bez radia, reconnect z NVS, generacja sesji, przepelnienie kolejki
+PASS R03 T06 - timeout 8 s, Absent odswieza lacze, 1100 prob z backoff na kodzie produkcyjnym
+PASS R04 T19 - rozlaczenie przed CONFIG, ponowienie co 200 ms, kasowanie par, powrot do lacza
+PASS R05 - skan HR najpierw, filtr, etykiety, wybor, weryfikacja uslugi HR i zapis pasa
+PASS R06 - brak probki 8 s, blad NVS, wygasle okno, nieudane laczenie, pusty skan, limit
+test_set_save_retry_close_get (test_client.SessionTests.test_set_save_retry_close_get) ... ok
+test_unsuccessful_transactions (test_client.SessionTests.test_unsuccessful_transactions) ... ok
+test_cpp_wire_vector (test_client.SettingsTests.test_cpp_wire_vector) ... ok
+test_stream_resync (test_client.SettingsTests.test_stream_resync) ... ok
+test_strict_import_and_export (test_client.SettingsTests.test_strict_import_and_export) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.061s
+
+OK
+No broken requirements found.
