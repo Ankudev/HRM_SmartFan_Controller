@@ -16,7 +16,8 @@ Układ płynnie steruje obrotami zwykłego wentylatora 230 V AC na podstawie akt
   - ustawić **podtrzymanie nawiewu po wysiłku (*Cooldown*, domyślnie `60 s`)**, żeby po zejściu tętna poniżej strefy `Z1` wentylator chłodził Cię jeszcze przez wybrany czas na pierwszym biegu,
   - wyszukać pasy HR w pobliżu i sparować wybrany pas jednym kliknięciem,
   - zmienić i zapisać w pamięci NVS progi 5 stref tętna (`BPM -> %`), histerezę, filtr oraz tempo przyspieszania i zwalniania nawiewu,
-  - wyszukać z listy swoje domowe Wi-Fi i połączyć się z nim bez ręcznego wpisywania nazwy sieci (jeśli kiedykolwiek zablokujesz dostęp, przytrzymaj przycisk `CONFIG` w trybie `KONFIGURACJA`, a sieć `SmartFan` znów stanie się otwarta).
+  - wyszukać z listy swoje domowe Wi-Fi i połączyć się z nim bez ręcznego wpisywania nazwy sieci (jeśli kiedykolwiek zablokujesz dostęp, przytrzymaj przycisk `CONFIG` w trybie `KONFIGURACJA`, a sieć `SmartFan` znów stanie się otwarta),
+  - **wgrywać aktualizacje oprogramowania przez Wi-Fi (Web OTA) wprost z telefonu lub komputera**, bez podłączania kabla USB i bez utraty zapisanych ustawień.
 - **Szybko wchodzi na obroty i wolniej z nich schodzi (*Fast Attack / Slow Decay*).** Gdy tętno rośnie na podjeździe lub podczas interwału, filtr reaguje czterokrotnie szybciej. Kiedy skończysz mocny odcinek i tętno spada, układ dłużej utrzymuje nawiew, żeby schłodzić rozgrzany organizm.
 - **Działa od razu po wgraniu.** Przy pierwszym uruchomieniu na czystym ESP32-S3 program sam zapisuje w pamięci NVS domyślne strefy tętna.
 - **Bezpiecznie steruje fazą 230 V AC (50 Hz):**
@@ -88,7 +89,14 @@ Jeśli podczas treningu używasz na telefonie aplikacji, które wymagają intern
 3. Wpisz hasło do swojego Wi-Fi i kliknij **„Połącz z wybraną siecią”**.
 4. Od tej chwili Twój telefon może cały czas pozostawać w domowym Wi-Fi (masz internet i *Zwift Companion*), a panel wentylatora otworzysz w dowolnej przeglądarce pod adresem **`http://smartfan.local`** (lub po adresie IP wyświetlanym na pasku statusu). Własna sieć `SmartFan` (`192.168.4.1`) nadal działa w tle jako zapasowa.
 
-### 3. Co oznaczają poszczególne parametry w panelu?
+### 3. Aktualizacja oprogramowania przez Wi-Fi (Web OTA)
+Gdy pojawi się nowa wersja programu, nie musisz rozkręcać obudowy ani podłączać kabla USB do płytki:
+1. Pobierz na telefon lub komputer plik **`SmartFan_OTA.bin`** z zakładki **Releases** (lub z artefaktów zakładki **Actions**) na GitHubie. Jeśli kompilujesz kod samodzielnie w Arduino IDE, kliknij w menu *Sketch -> Export Compiled Binary*, a gotowy plik `.bin` pojawi się w folderze projektu.
+2. Wejdź w panel sterownika (`http://192.168.4.1` lub `http://smartfan.local`) i rozwiń na samym dole zakładkę **„🔄 Aktualizacja oprogramowania (OTA)”**.
+3. Wybierz pobrany plik `.bin` i kliknij **„⬆️ Wgraj aktualizację (.bin)”**.
+4. Sterownik sam zatrzyma śmigło na czas zapisu, pokaże pasek postępu (`0 do 100%`) i po około 5 sekundach uruchomi się ponownie z nową wersją. Twój sparowany pas tętna, strefy `Z1 do Z5` oraz ustawienia domowego Wi-Fi zostają w pamięci NVS.
+
+### 4. Co oznaczają poszczególne parametry w panelu?
 - **Strefy Z1 do Z5 (`Od BPM` i `Moc %`):** dolne progi tętna i przypisana im moc nawiewu. Poniżej progu `Z1` wentylator stoi wyłączony (`0%`). Gdy tętno osiągnie dany próg, nawiew płynnie przechodzi na zadany procent mocy.
 - **Tryb krzywej AUTO (`Płynny` lub `5 biegów`, domyślnie `Płynny`):** w trybie `Płynny` sterownik liniowo wylicza każdy pojedynczy procent mocy pomiędzy sąsiednimi progami stref (np. gdy Twoje tętno jest w połowie drogi między `Z1` a `Z2`, wentylator ustawi dokładnie `38%`), więc nie czujesz skokowych zmian biegów. W trybie `5 biegów` sterownik trzyma stałą moc danej strefy aż do przekroczenia kolejnego progu.
 - **Podtrzymanie po wysiłku (`0 do 600 s`, domyślnie `60 s`):** gdy skończysz mocny podjazd albo zejdziesz z roweru i tętno spadnie poniżej progu `Z1`, ciało nadal oddaje dużo ciepła. Dzięki tej opcji wentylator nie wyłączy się od razu do zera, tylko będzie chłodził Cię na pierwszym biegu (`Z1`) jeszcze przez wybraną liczbę sekund.
@@ -97,7 +105,7 @@ Jeśli podczas treningu używasz na telefonie aplikacji, które wymagają intern
 - **Wzrost i Spadek (`1 do 100 %/s`, domyślnie `15` i `8 %/s`):** określają, o ile punktów procentowych na sekundę śmigło przyspiesza i zwalnia przy zmianie biegu, dzięki czemu silnik zmienia obroty łagodnie i bez szarpnięć.
 - **Domyślny MANUAL (`%`, domyślnie `45%`):** bieg, z jakim rusza wentylator po włączeniu trybu ręcznego fizycznym przyciskiem `CONFIG` na obudowie.
 
-### 4. Fizyczne przyciski na obudowie
+### 5. Fizyczne przyciski na obudowie
 
 | Tryb aktualny | Krótkie `PAIR` (`GPIO 12`) | Przytrzymanie `PAIR` (`1,2 s`) | Krótkie `CONFIG` (`GPIO 16`) | Przytrzymanie `CONFIG` (`1,2 s`) |
 |---|---|---|---|---|
@@ -107,7 +115,7 @@ Jeśli podczas treningu używasz na telefonie aplikacji, które wymagają intern
 | **WYBÓR PASA** | Następny pas na liście | Wyjdź do **OFF** | Zatwierdź wybrany pas | Wyjdź do **OFF** |
 | **KONFIGURACJA** | Wyjdź do **OFF** | Wyjdź do **OFF** | Brak akcji | **Usuń parowania BLE i hasło AP** |
 
-### 5. Domyślne strefy tętna (tryb AUTO)
+### 6. Domyślne strefy tętna (tryb AUTO)
 
 | Strefa | Zakres tętna | Nastawa wentylatora |
 |---|---|---|

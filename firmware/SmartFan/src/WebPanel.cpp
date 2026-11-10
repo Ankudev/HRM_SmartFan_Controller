@@ -3,6 +3,7 @@
 #include <DNSServer.h>
 #include <ESPmDNS.h>
 #include <Preferences.h>
+#include <Update.h>
 #include <WebServer.h>
 #include <WiFi.h>
 #include <cstdio>
@@ -12,6 +13,7 @@
 namespace fan::app {
 namespace {
 
+constexpr const char* fwVersion = "v2.3";
 constexpr uint16_t dnsPort = 53;
 const IPAddress apIp(192, 168, 4, 1);
 const IPAddress netMask(255, 255, 255, 0);
@@ -20,6 +22,8 @@ DNSServer dns;
 WebServer server(80);
 bool started = false;
 bool mdnsStarted = false;
+bool otaFailed = false;
+String otaError;
 uint32_t forgetSeen = 0;
 String staSsid;
 String staPass;
@@ -75,10 +79,13 @@ input[type=number],select{width:100%;background:#0b1120;border:1px solid #334155
 .modal h3{font-size:1.02rem;color:var(--acc);margin-bottom:8px}
 .modal p{font-size:.88rem;line-height:1.48;color:var(--fg);margin-bottom:14px}
 .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0b1120;border:1px solid var(--acc);padding:10px 18px;border-radius:20px;font-size:.9rem;display:none;z-index:99}
+.ver{font-size:.78rem;font-weight:500;color:var(--sub);margin-left:6px}
+.prog-bg{width:100%;height:14px;background:#0b1120;border-radius:7px;overflow:hidden;margin-top:10px;display:none}
+.prog-bar{height:100%;width:0%;background:var(--ok);transition:width .15s}
 </style>
 </head>
 <body>
-<h1>HRM SmartFan v2</h1>
+<h1>HRM SmartFan <span class="ver" id="verTxt">v2.3</span></h1>
 
 <div class="card">
   <div class="hdr"><h2>Podgląd i sterowanie</h2><span class="q" onclick="help('modes')">?</span></div>
@@ -156,6 +163,22 @@ input[type=number],select{width:100%;background:#0b1120;border:1px solid #334155
   </div>
 </details>
 
+<details class="card">
+  <summary style="cursor:pointer;font-size:.9rem;color:var(--sub);font-weight:600;outline:none;display:flex;justify-content:space-between;align-items:center">
+    <span>🔄 Aktualizacja oprogramowania (OTA)</span>
+    <span class="q" onclick="event.preventDefault();event.stopPropagation();help('ota')">?</span>
+  </summary>
+  <div style="margin-top:12px">
+    <p style="font-size:.82rem;color:var(--sub);line-height:1.42;margin-bottom:10px">
+      Wybierz pobrany plik aktualizacji <b style="color:var(--fg)">.bin</b> z telefonu lub komputera. Na czas wgrywania wentylator sam wyłączy napęd, a Twoje strefy tętna, sparowany pas HR i ustawienia Wi-Fi zostaną zachowane.
+    </p>
+    <input type="file" id="otaFile" accept=".bin" style="width:100%;background:#0b1120;border:1px solid #334155;border-radius:8px;padding:10px;color:var(--fg);font-size:.86rem">
+    <div class="prog-bg" id="otaProgBg"><div class="prog-bar" id="otaProgBar"></div></div>
+    <div id="otaStatus" style="text-align:center;font-size:.82rem;color:var(--acc);margin-top:6px"></div>
+    <button class="primary" id="btnOta" onclick="uploadOta()">⬆️ Wgraj aktualizację (.bin)</button>
+  </div>
+</details>
+
 <div class="modal-bg" id="modal" onclick="closeHelp()">
   <div class="modal" onclick="event.stopPropagation()">
     <h3 id="mTitle"></h3>
@@ -187,7 +210,8 @@ const helps={
   rise:["Tempo wzrostu (%/s)","Określa, o ile procent na sekundę rośnie moc wentylatora przy wchodzeniu na wyższy bieg. Dzięki temu silnik przyspiesza płynnie i bez szarpnięć."],
   fall:["Tempo spadku (%/s)","Określa, o ile procent na sekundę maleją obroty wentylatora, gdy Twoje tętno spadnie do niższej strefy."],
   man:["Domyślny bieg MANUAL (%)","To początkowa moc nawiewu, z jaką ruszy wentylator, gdy włączysz tryb MANUAL fizycznym przyciskiem na obudowie sterownika."],
-  wifi:["Po co łączyć sterownik z domowym Wi-Fi?","Domyślnie telefon łączy się bezpośrednio z siecią wentylatora (SmartFan), która nie ma dostępu do internetu. Jeśli w trakcie jazdy używasz na telefonie aplikacji wymagających internetu lub sieci domowej (np. Zwift Companion, Spotify czy YouTube), wybierz z listy swoje domowe Wi-Fi i wpisz hasło. Od tej pory nie musisz już przełączać Wi-Fi w telefonie, a ten panel otworzysz w domowej sieci pod adresem http://smartfan.local (lub po adresie IP pokazanym na pasku statusu)."]
+  wifi:["Po co łączyć sterownik z domowym Wi-Fi?","Domyślnie telefon łączy się bezpośrednio z siecią wentylatora (SmartFan), która nie ma dostępu do internetu. Jeśli w trakcie jazdy używasz na telefonie aplikacji wymagających internetu lub sieci domowej (np. Zwift Companion, Spotify czy YouTube), wybierz z listy swoje domowe Wi-Fi i wpisz hasło. Od tej pory nie musisz już przełączać Wi-Fi w telefonie, a ten panel otworzysz w domowej sieci pod adresem http://smartfan.local (lub po adresie IP pokazanym na pasku statusu)."],
+  ota:["Jak działa aktualizacja przez Wi-Fi (OTA)?","Nie musisz podłączać kabla USB ani rozkręcać obudowy. Pobierz najnowszy plik SmartFan.bin ze strony projektu na GitHubie (zakładka Releases), wybierz go tutaj i kliknij Wgraj aktualizację. Sterownik sam zatrzyma śmigło na czas zapisu (ok. 5 sekund), a po restarcie zachowa Twój sparowany pas HR, strefy tętna i domowe Wi-Fi."]
 };
 function help(k){
   const h=helps[k];if(!h)return;
@@ -250,11 +274,52 @@ function saveWifi(){
 function clearWifi(){
   post('/api/wifi','ssid=&pass=');
 }
+function uploadOta(){
+  const f=document.getElementById('otaFile').files[0];
+  if(!f||!f.name.endsWith('.bin')){msg('Wybierz plik z rozszerzeniem .bin');return;}
+  const btn=document.getElementById('btnOta');
+  const bg=document.getElementById('otaProgBg');
+  const bar=document.getElementById('otaProgBar');
+  const st=document.getElementById('otaStatus');
+  btn.disabled=true;
+  bg.style.display='block';
+  bar.style.width='0%';
+  st.innerText='Zatrzymuję napęd i przesyłam plik... 0%';
+  const fd=new FormData();
+  fd.append('update',f,f.name);
+  const xhr=new XMLHttpRequest();
+  xhr.open('POST','/api/ota',true);
+  xhr.upload.onprogress=e=>{
+    if(e.lengthComputable){
+      const p=Math.round((e.loaded/e.total)*100);
+      bar.style.width=p+'%';
+      st.innerText='Wgrywanie aktualizacji: '+p+'%';
+    }
+  };
+  xhr.onload=()=>{
+    btn.disabled=false;
+    try{
+      const j=JSON.parse(xhr.responseText);
+      if(xhr.status===200&&j.ok){
+        bar.style.width='100%';
+        st.innerText='Gotowe! Sterownik uruchamia się ponownie (ok. 5 s)...';
+        msg('Zaktualizowano! Restartuję...');
+        setTimeout(()=>location.reload(),5500);
+      }else{
+        st.innerText=j.error||'Błąd aktualizacji';
+        msg(j.error||'Błąd aktualizacji');
+      }
+    }catch(e){st.innerText='Błąd odpowiedzi serwera';}
+  };
+  xhr.onerror=()=>{btn.disabled=false;st.innerText='Przerwano połączenie podczas wgrywania';};
+  xhr.send(fd);
+}
 
 async function poll(){
   try{
     const r=await fetch('/api/state');
     const s=await r.json();
+    if(s.ver)document.getElementById('verTxt').innerText=s.ver;
     document.getElementById('bpm').innerText=s.fresh?(s.bpm+' BPM'):'-- BPM';
     document.getElementById('demand').innerText=s.demand+'%';
     document.getElementById('targetTxt').innerText=s.mode===2?('Cel ręczny '+s.manual+'%'):'Nastawa';
@@ -315,14 +380,14 @@ void handleState() {
     appendJsonEscaped(safeSsid, sizeof(safeSsid), staSsid.c_str());
     const String staIp = (WiFi.status() == WL_CONNECTED) ? WiFi.localIP().toString() : String("");
 
-    char buf[1850]{};
+    char buf[1880]{};
     std::snprintf(
         buf, sizeof(buf),
-        "{\"mode\":%u,\"reason\":%u,\"bpm\":%u,\"demand\":%u,\"fresh\":%s,\"manual\":%u,\"radio\":%u,"
+        "{\"ver\":\"%s\",\"mode\":%u,\"reason\":%u,\"bpm\":%u,\"demand\":%u,\"fresh\":%s,\"manual\":%u,\"radio\":%u,"
         "\"wifi\":{\"ssid\":\"%s\",\"ip\":\"%s\",\"apSec\":%s},"
         "\"cfg\":{\"t\":[%u,%u,%u,%u,%u],\"d\":[%u,%u,%u,%u,%u],\"smooth\":%s,\"cool\":%u,\"hyst\":%u,\"filt\":%u,\"rise\":%u,\"fall\":%u,\"man\":%u},"
         "\"cands\":[",
-        unsigned(state.mode), unsigned(state.reason), unsigned(state.bpm), unsigned(state.demand),
+        fwVersion, unsigned(state.mode), unsigned(state.reason), unsigned(state.bpm), unsigned(state.demand),
         state.fresh ? "true" : "false", unsigned(state.manual), unsigned(radio.state),
         safeSsid, staIp.c_str(), apPass.length() >= 8 ? "true" : "false",
         unsigned(cfg.config.threshold[0]), unsigned(cfg.config.threshold[1]), unsigned(cfg.config.threshold[2]),
@@ -483,6 +548,46 @@ void handleWifi() {
     applyWifiConfig();
 }
 
+void handleOtaUpload() {
+    HTTPUpload& up = server.upload();
+    if (up.status == UPLOAD_FILE_START) {
+        otaFailed = false;
+        otaError = "";
+        UiCommand cmd{UiAction::SetMode, Mode::Off, 0};
+        if (uiCommand) xQueueOverwrite(uiCommand, &cmd);
+        delay(40);
+        if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) {
+            otaFailed = true;
+            otaError = "Brak miejsca na partycji OTA";
+        }
+    } else if (up.status == UPLOAD_FILE_WRITE) {
+        if (!otaFailed && Update.write(up.buf, up.currentSize) != up.currentSize) {
+            otaFailed = true;
+            otaError = "Błąd zapisu pamięci Flash";
+        }
+    } else if (up.status == UPLOAD_FILE_END) {
+        if (!otaFailed && !Update.end(true)) {
+            otaFailed = true;
+            otaError = "Nieprawidłowy plik aktualizacji (.bin)";
+        }
+    } else if (up.status == UPLOAD_FILE_ABORTED) {
+        Update.abort();
+        otaFailed = true;
+        otaError = "Przerwano przesyłanie pliku";
+    }
+}
+
+void handleOtaDone() {
+    if (otaFailed || Update.hasError()) {
+        String msg = "{\"ok\":false,\"error\":\"" + (otaError.length() ? otaError : String("Błąd aktualizacji OTA")) + "\"}";
+        server.send(400, "application/json", msg);
+        return;
+    }
+    server.send(200, "application/json", "{\"ok\":true,\"msg\":\"Zaktualizowano pomyślnie! Restart...\"}");
+    delay(400);
+    ESP.restart();
+}
+
 void redirectToPortal() {
     server.sendHeader("Location", "http://192.168.4.1/", true);
     server.send(302, "text/plain", "");
@@ -510,6 +615,7 @@ void webBegin() {
     server.on("/api/config", HTTP_POST, handleConfig);
     server.on("/api/wifi_scan", HTTP_GET, handleWifiScan);
     server.on("/api/wifi", HTTP_POST, handleWifi);
+    server.on("/api/ota", HTTP_POST, handleOtaDone, handleOtaUpload);
     server.on("/generate_204", HTTP_GET, redirectToPortal);
     server.on("/hotspot-detect.html", HTTP_GET, redirectToPortal);
     server.on("/ncsi.txt", HTTP_GET, redirectToPortal);
