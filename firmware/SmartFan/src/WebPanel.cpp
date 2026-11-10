@@ -54,6 +54,9 @@ button.secondary{background:#334155;width:100%;margin-top:8px}
 .slider-row{display:flex;align-items:center;gap:8px;margin-top:6px}
 .slider-row input[type=range]{flex:1;accent-color:var(--acc);height:28px}
 .slider-row button{padding:10px 14px}
+.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.presets button{padding:9px 4px;font-size:.86rem;background:#0b1120;border:1px solid #334155;color:var(--acc)}
+.presets button:active{background:var(--acc);color:#0f172a}
 .cand-list{margin-top:10px;display:flex;flex-direction:column;gap:8px}
 .cand{display:flex;justify-content:space-between;align-items:center;background:#0b1120;padding:10px 12px;border-radius:10px}
 .cand .info{font-size:.88rem}
@@ -61,8 +64,8 @@ button.secondary{background:#334155;width:100%;margin-top:8px}
 .cand button{padding:8px 12px;font-size:.85rem;background:var(--ok)}
 .grid-z{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;align-items:center;margin-bottom:10px;font-size:.88rem}
 .grid-z span{color:var(--sub)}
-input[type=number]{width:100%;background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:.95rem;text-align:center}
-.grid-p{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center;font-size:.88rem;margin-top:8px}
+input[type=number],select{width:100%;background:#0b1120;border:1px solid #334155;border-radius:8px;padding:8px;color:#fff;font-size:.95rem;text-align:center}
+.grid-p{display:grid;grid-template-columns:1fr 125px;gap:8px;align-items:center;font-size:.88rem;margin-top:8px}
 .hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .hdr h2{margin-bottom:0}
 .q{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#334155;color:var(--acc);font-size:.8rem;font-weight:700;cursor:pointer;margin-left:6px;user-select:none}
@@ -94,7 +97,13 @@ input[type=number]{width:100%;background:#0b1120;border:1px solid #334155;border
     <input type="range" id="manSlider" min="0" max="100" step="5" value="45" onchange="sendMan(this.value)" oninput="document.getElementById('manVal').innerText=this.value+'%'">
     <button onclick="stepMan(5)">+5%</button>
   </div>
-  <div style="text-align:center;font-size:.8rem;color:var(--sub);margin-top:4px">Bieg ręczny: <b id="manVal">45%</b></div>
+  <div class="presets">
+    <button onclick="quickMan(30)">30%</button>
+    <button onclick="quickMan(50)">50%</button>
+    <button onclick="quickMan(75)">75%</button>
+    <button onclick="quickMan(95)">95%</button>
+  </div>
+  <div style="text-align:center;font-size:.8rem;color:var(--sub);margin-top:6px">Bieg ręczny: <b id="manVal">45%</b></div>
 </div>
 
 <div class="card">
@@ -114,6 +123,8 @@ input[type=number]{width:100%;background:#0b1120;border:1px solid #334155;border
     <span>Z5</span><input type="number" id="t4"><input type="number" id="d4">
   </div>
   <div class="grid-p">
+    <span>Tryb krzywej AUTO<span class="q" onclick="help('smooth')">?</span></span><select id="smooth"><option value="1">Płynny</option><option value="0">5 biegów</option></select>
+    <span>Podtrzymanie (0 do 600 s)<span class="q" onclick="help('cool')">?</span></span><input type="number" id="cool">
     <span>Histereza (1 do 15 BPM)<span class="q" onclick="help('hyst')">?</span></span><input type="number" id="hyst">
     <span>Filtr HR (0 do 10000 ms)<span class="q" onclick="help('filt')">?</span></span><input type="number" id="filt">
     <span>Wzrost (1 do 100 %/s)<span class="q" onclick="help('rise')">?</span></span><input type="number" id="rise">
@@ -166,9 +177,11 @@ slider.addEventListener('mousedown',()=>manDragging=true);
 slider.addEventListener('mouseup',()=>manDragging=false);
 
 const helps={
-  modes:["Tryby pracy wentylatora","OFF wyłącza wentylator. W trybie AUTO (HR) sterownik sam dobiera obroty śmigła do Twojego aktualnego tętna z opaski. W trybie MANUAL ustawiasz stałą moc nawiewu suwakiem, nawet bez założonego pasa tętna."],
+  modes:["Tryby pracy wentylatora","OFF wyłącza wentylator. W trybie AUTO (HR) sterownik sam dobiera obroty śmigła do Twojego aktualnego tętna z opaski. W trybie MANUAL ustawiasz stałą moc nawiewu suwakiem lub czterema przyciskami szybkich biegów (30%, 50%, 75%, 95%), nawet bez założonego pasa tętna."],
   ble:["Jak sparować pas tętna?","Załóż pas na klatkę piersiową i lekko zwilż elektrody, żeby zaczął nadawać. Jeśli pas jest połączony z telefonem (np. w nRF Connect lub aplikacji producenta), rozłącz go tam na chwilę. Kliknij Skanuj pasy HR i wybierz swój pas z listy. Sterownik zapamięta go na stałe i na kolejnych treningach połączy się z nim sam."],
-  zones:["Strefy tętna (Z1 do Z5)","Wpisz tutaj progi tętna (Od BPM) i odpowiadającą im moc wentylatora (Moc %). Poniżej progu Z1 wentylator stoi wyłączony (0%). Gdy Twoje tętno przekroczy kolejny próg, nawiew płynnie przyspieszy do przypisanej wartości."],
+  zones:["Strefy tętna (Z1 do Z5)","Wpisz tutaj progi tętna (Od BPM) i odpowiadającą im moc wentylatora (Moc %). Poniżej progu Z1 wentylator stoi wyłączony (0%). Gdy Twoje tętno przekroczy próg Z1, nawiew ruszy i będzie przyspieszał wraz ze wzrostem tętna."],
+  smooth:["Tryb krzywej AUTO (Płynny lub 5 biegów)","W trybie Płynnym sterownik wylicza dokładny procent mocy pomiędzy sąsiednimi progami (podobnie jak Wahoo Headwind). Gdy Twoje tętno jest w połowie drogi między Z1 (30%) a Z2 (45%), wentylator kręci się na 38%, więc nie czujesz skokowych zmian biegów. W trybie 5 biegów wentylator trzyma stałą moc danej strefy aż do przekroczenia kolejnego progu."],
+  cool:["Podtrzymanie po wysiłku (Cooldown)","Gdy skończysz mocny podjazd lub zejdziesz z roweru i Twoje tętno spadnie poniżej progu Z1 (np. 105 BPM), ciało nadal oddaje dużo ciepła. Podtrzymanie sprawia, że wentylator nie wyłączy się od razu do zera, tylko będzie chłodził Cię na pierwszym biegu (Z1) jeszcze przez wybraną liczbę sekund (np. 60 s). Wpisz 0, jeśli chcesz wyłączać nawiew natychmiast."],
   hyst:["Co to jest histereza?","Histereza zapobiega ciągłemu przełączaniu biegów w górę i w dół, gdy Twoje tętno waha się na granicy strefy. Przykład: jeśli próg Z2 wynosi 125 BPM, a histereza to 3 BPM, wentylator wejdzie na drugi bieg przy 125 BPM, ale zwolni dopiero wtedy, gdy tętno spadnie poniżej 122 BPM."],
   filt:["Jak działa filtr HR?","Filtr wygładza chwilowe skoki odczytu z pasa tętna. Działa asymetrycznie: gdy zaczynasz podjazd lub sprint i tętno rośnie, reaguje czterokrotnie szybciej, a po zakończeniu wysiłku opada wolniej, żeby dłużej chłodzić rozgrzany organizm."],
   rise:["Tempo wzrostu (%/s)","Określa, o ile procent na sekundę rośnie moc wentylatora przy wchodzeniu na wyższy bieg. Dzięki temu silnik przyspiesza płynnie i bez szarpnięć."],
@@ -188,22 +201,25 @@ function msg(t){const e=document.getElementById('toast');e.innerText=t;e.style.d
 async function post(u,b){try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b});const j=await r.json();if(!r.ok)msg(j.error||'Błąd');else if(j.msg)msg(j.msg);poll();}catch(e){msg('Błąd połączenia');}}
 function setMode(m){post('/api/mode','mode='+m);}
 function sendMan(v){post('/api/manual','value='+v);}
+function quickMan(v){slider.value=v;document.getElementById('manVal').innerText=v+'%';sendMan(v);}
 function stepMan(s){let v=parseInt(slider.value||0)+s;v=Math.max(0,Math.min(100,v));slider.value=v;document.getElementById('manVal').innerText=v+'%';sendMan(v);}
 function pickCand(i){post('/api/pair','index='+i);}
 
 function fillCfg(c){
   for(let i=0;i<5;i++){document.getElementById('t'+i).value=c.t[i];document.getElementById('d'+i).value=c.d[i];}
+  document.getElementById('smooth').value=c.smooth?1:0;
+  document.getElementById('cool').value=c.cool!==undefined?c.cool:60;
   document.getElementById('hyst').value=c.hyst;
   document.getElementById('filt').value=c.filt;
   document.getElementById('rise').value=c.rise;
   document.getElementById('fall').value=c.fall;
   document.getElementById('manDef').value=c.man;
 }
-function resetDef(){fillCfg({t:[105,125,145,165,200],d:[30,45,60,75,95],hyst:3,filt:2000,rise:15,fall:8,man:45});msg('Wpisano domyślne – kliknij Zapisz');}
+function resetDef(){fillCfg({t:[105,125,145,165,200],d:[30,45,60,75,95],smooth:1,cool:60,hyst:3,filt:2000,rise:15,fall:8,man:45});msg('Wpisano domyślne (kliknij Zapisz)');}
 function saveCfg(){
   const p=[];
   for(let i=0;i<5;i++)p.push('t'+i+'='+document.getElementById('t'+i).value,'d'+i+'='+document.getElementById('d'+i).value);
-  p.push('hyst='+document.getElementById('hyst').value,'filt='+document.getElementById('filt').value,'rise='+document.getElementById('rise').value,'fall='+document.getElementById('fall').value,'man='+document.getElementById('manDef').value);
+  p.push('smooth='+document.getElementById('smooth').value,'cool='+document.getElementById('cool').value,'hyst='+document.getElementById('hyst').value,'filt='+document.getElementById('filt').value,'rise='+document.getElementById('rise').value,'fall='+document.getElementById('fall').value,'man='+document.getElementById('manDef').value);
   post('/api/config',p.join('&'));
 }
 let pickedSsid='';
@@ -299,12 +315,12 @@ void handleState() {
     appendJsonEscaped(safeSsid, sizeof(safeSsid), staSsid.c_str());
     const String staIp = (WiFi.status() == WL_CONNECTED) ? WiFi.localIP().toString() : String("");
 
-    char buf[1800]{};
+    char buf[1850]{};
     std::snprintf(
         buf, sizeof(buf),
         "{\"mode\":%u,\"reason\":%u,\"bpm\":%u,\"demand\":%u,\"fresh\":%s,\"manual\":%u,\"radio\":%u,"
         "\"wifi\":{\"ssid\":\"%s\",\"ip\":\"%s\",\"apSec\":%s},"
-        "\"cfg\":{\"t\":[%u,%u,%u,%u,%u],\"d\":[%u,%u,%u,%u,%u],\"hyst\":%u,\"filt\":%u,\"rise\":%u,\"fall\":%u,\"man\":%u},"
+        "\"cfg\":{\"t\":[%u,%u,%u,%u,%u],\"d\":[%u,%u,%u,%u,%u],\"smooth\":%s,\"cool\":%u,\"hyst\":%u,\"filt\":%u,\"rise\":%u,\"fall\":%u,\"man\":%u},"
         "\"cands\":[",
         unsigned(state.mode), unsigned(state.reason), unsigned(state.bpm), unsigned(state.demand),
         state.fresh ? "true" : "false", unsigned(state.manual), unsigned(radio.state),
@@ -313,6 +329,7 @@ void handleState() {
         unsigned(cfg.config.threshold[3]), unsigned(cfg.config.threshold[4]),
         unsigned(cfg.config.demand[0]), unsigned(cfg.config.demand[1]), unsigned(cfg.config.demand[2]),
         unsigned(cfg.config.demand[3]), unsigned(cfg.config.demand[4]),
+        cfg.config.smoothCurve ? "true" : "false", unsigned(cfg.config.cooldownSec),
         unsigned(cfg.config.hysteresis), unsigned(cfg.config.filterMs), unsigned(cfg.config.risePerSecond),
         unsigned(cfg.config.fallPerSecond), unsigned(cfg.config.manual));
 
@@ -377,6 +394,14 @@ void handleConfig() {
         ok = ok && parseUint16(server.arg("t" + String(i)), cfg.threshold[i]);
         ok = ok && parseUint16(server.arg("d" + String(i)), cfg.demand[i]);
     }
+    uint16_t smoothVal = 0;
+    if (server.hasArg("smooth")) {
+        ok = ok && parseUint16(server.arg("smooth"), smoothVal);
+        cfg.smoothCurve = (smoothVal != 0);
+    }
+    if (server.hasArg("cool")) {
+        ok = ok && parseUint16(server.arg("cool"), cfg.cooldownSec);
+    }
     ok = ok && parseUint16(server.arg("hyst"), cfg.hysteresis);
     ok = ok && parseUint16(server.arg("filt"), cfg.filterMs);
     ok = ok && parseUint16(server.arg("rise"), cfg.risePerSecond);
@@ -385,7 +410,7 @@ void handleConfig() {
 
     if (!ok || !valid(cfg)) {
         server.send(400, "application/json",
-                    "{\"error\":\"Nieprawidłowe zakresy (progi muszą rosnąć z odstępem > histereza, moce 30-100%)\"}");
+                    "{\"error\":\"Nieprawidłowe zakresy (progi muszą rosnąć z odstępem > histereza, moce 30 do 100%, podtrzymanie 0 do 600 s)\"}");
         return;
     }
     if (configSaveRequest) xQueueOverwrite(configSaveRequest, &cfg);

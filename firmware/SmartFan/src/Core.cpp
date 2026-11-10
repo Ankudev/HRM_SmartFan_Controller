@@ -8,7 +8,7 @@ namespace fan {
 bool valid(const Config& c) {
     if (c.hysteresis > 10 || c.filterMs > 10000 || c.risePerSecond < 1 ||
         c.risePerSecond > 100 || c.fallPerSecond < 1 || c.fallPerSecond > 100 ||
-        c.manual > 100) return false;
+        c.manual > 100 || c.cooldownSec > 600) return false;
     for (size_t i = 0; i < zoneCount; ++i) {
         if (c.threshold[i] < 30 || c.threshold[i] > 240 || c.demand[i] > 100) return false;
         if (i && (c.threshold[i] <= c.threshold[i - 1] + c.hysteresis ||
@@ -108,6 +108,7 @@ void Control::configure(const Config& c, bool ok, const DriveProfile& p) {
 void Control::clearOutput() {
     output_ = 0;
     started_ = false;
+    cooldownActive_ = false;
 }
 
 void Control::select(Mode mode) {
@@ -133,6 +134,7 @@ void Control::loseInput() {
     good_ = 0;
     hr_ = {};
     zone_ = 0;
+    cooldownActive_ = false;
     if (mode_ == Mode::Auto) clearOutput();
 }
 
@@ -162,10 +164,35 @@ void Control::sample(uint32_t session, uint32_t now, HeartRate hr) {
     hr_ = hr;
 }
 
-uint16_t Control::autoDemand() {
+uint16_t Control::autoDemand(uint32_t now) {
     while (zone_ < zoneCount && filtered_ >= config_.threshold[zone_]) ++zone_;
     while (zone_ && filtered_ < config_.threshold[zone_ - 1] - config_.hysteresis) --zone_;
-    return zone_ ? config_.demand[zone_ - 1] : 0;
+    uint16_t raw = 0;
+    if (zone_ > 0) {
+        const size_t idx = zone_ - 1;
+        if (!config_.smoothCurve || idx + 1 >= zoneCount) {
+            raw = config_.demand[idx];
+        } else {
+            const float tLow = float(config_.threshold[idx]);
+            const float tHigh = float(config_.threshold[idx + 1]);
+            const float dLow = float(config_.demand[idx]);
+            const float dHigh = float(config_.demand[idx + 1]);
+            const float span = tHigh - tLow;
+            const float ratio = span > 0.0f ? std::clamp((filtered_ - tLow) / span, 0.0f, 1.0f) : 0.0f;
+            raw = uint16_t(std::lround(dLow + ratio * (dHigh - dLow)));
+        }
+    }
+    if (raw > 0) {
+        activeAt_ = now;
+        cooldownActive_ = true;
+        return raw;
+    }
+    if (cooldownActive_ && config_.cooldownSec > 0 &&
+        elapsed(now, activeAt_) < uint32_t(config_.cooldownSec) * 1000U) {
+        return config_.demand[0];
+    }
+    cooldownActive_ = false;
+    return 0;
 }
 
 uint8_t Control::ramp(uint16_t target, uint32_t now, uint32_t dt) {
@@ -217,7 +244,7 @@ Snapshot Control::tick(uint32_t now, Drive drive) {
         else if (hr_.contact == Contact::Absent) s.reason = Reason::NoContact;
         else if (good_ < 2) s.reason = good_ ? Reason::Waiting : Reason::Stale;
         else {
-            s.demand = ramp(autoDemand(), now, dt);
+            s.demand = ramp(autoDemand(now), now, dt);
             s.reason = Reason::Running;
             return s;
         }

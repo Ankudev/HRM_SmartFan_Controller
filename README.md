@@ -9,12 +9,14 @@ Układ płynnie steruje obrotami zwykłego wentylatora 230 V AC na podstawie akt
 ## Co potrafi sterownik
 
 - **Łączy się z dowolnym pasem tętna BLE (HRS `0x180D`).** Przetestowałem go z **Garmin HRM-Pro+**, ale kod obsługuje też pasy i opaski Polar, Wahoo TICKR, Coospo, Magene, Decathlon, Suunto czy Coros. Po pierwszym sparowaniu płytka sama wznawia połączenie w tle.
-- **Ma wbudowany panel na telefon (iOS i Android) oraz obsługuje domowe Wi-Fi (`http://smartfan.local`).** Sterownik wystawia własną sieć Wi-Fi **`SmartFan`** pod adresem **`http://192.168.4.1`**. Gdy wpiszesz dane domowego routera, połączy się z nim i będzie dostępny pod adresem **`http://smartfan.local`**, więc podczas jazdy na telefonie nadal działa choćby *Zwift Companion*. W panelu możesz:
+- **Ma wbudowany panel na telefon (iOS i Android) oraz obsługuje domowe Wi-Fi (`http://smartfan.local`).** Sterownik wystawia własną sieć Wi-Fi **`SmartFan`** pod adresem **`http://192.168.4.1`**. Gdy wybierzesz z listy swój domowy router, połączy się z nim i będzie dostępny pod adresem **`http://smartfan.local`**, więc podczas jazdy na telefonie nadal działa choćby *Zwift Companion*. W panelu możesz:
   - sprawdzać na żywo tętno (`BPM`), moc nawiewu (`%`) i stan połączenia z pasem,
-  - przełączać tryby **`OFF` / `AUTO (HR)` / `MANUAL`** i zmieniać bieg suwakiem,
+  - przełączać tryby **`OFF` / `AUTO (HR)` / `MANUAL`**, zmieniać bieg suwakiem albo jednym dotknięciem na czterech dużych kafelkach szybkich biegów (**`30% / 50% / 75% / 95%`**),
+  - wybierać między **płynną krzywą liniową** (sterownik sam wylicza każdy pojedynczy procent mocy pomiędzy strefami, podobnie jak Wahoo Headwind) a klasycznym trybem **5 biegów schodkowych**,
+  - ustawić **podtrzymanie nawiewu po wysiłku (*Cooldown*, domyślnie `60 s`)**, żeby po zejściu tętna poniżej strefy `Z1` wentylator chłodził Cię jeszcze przez wybrany czas na pierwszym biegu,
   - wyszukać pasy HR w pobliżu i sparować wybrany pas jednym kliknięciem,
   - zmienić i zapisać w pamięci NVS progi 5 stref tętna (`BPM -> %`), histerezę, filtr oraz tempo przyspieszania i zwalniania nawiewu,
-  - wpisać namiary na domowe Wi-Fi i nadać hasło WPA2 dla sieci `SmartFan` (jeśli je zapomnisz, przytrzymaj przycisk `CONFIG` w trybie `KONFIGURACJA`, a sieć znów stanie się otwarta).
+  - wyszukać z listy swoje domowe Wi-Fi i połączyć się z nim bez ręcznego wpisywania nazwy sieci (jeśli kiedykolwiek zablokujesz dostęp, przytrzymaj przycisk `CONFIG` w trybie `KONFIGURACJA`, a sieć `SmartFan` znów stanie się otwarta).
 - **Szybko wchodzi na obroty i wolniej z nich schodzi (*Fast Attack / Slow Decay*).** Gdy tętno rośnie na podjeździe lub podczas interwału, filtr reaguje czterokrotnie szybciej. Kiedy skończysz mocny odcinek i tętno spada, układ dłużej utrzymuje nawiew, żeby schłodzić rozgrzany organizm.
 - **Działa od razu po wgraniu.** Przy pierwszym uruchomieniu na czystym ESP32-S3 program sam zapisuje w pamięci NVS domyślne strefy tętna.
 - **Bezpiecznie steruje fazą 230 V AC (50 Hz):**
@@ -88,6 +90,8 @@ Jeśli podczas treningu używasz na telefonie aplikacji, które wymagają intern
 
 ### 3. Co oznaczają poszczególne parametry w panelu?
 - **Strefy Z1 do Z5 (`Od BPM` i `Moc %`):** dolne progi tętna i przypisana im moc nawiewu. Poniżej progu `Z1` wentylator stoi wyłączony (`0%`). Gdy tętno osiągnie dany próg, nawiew płynnie przechodzi na zadany procent mocy.
+- **Tryb krzywej AUTO (`Płynny` lub `5 biegów`, domyślnie `Płynny`):** w trybie `Płynny` sterownik liniowo wylicza każdy pojedynczy procent mocy pomiędzy sąsiednimi progami stref (np. gdy Twoje tętno jest w połowie drogi między `Z1` a `Z2`, wentylator ustawi dokładnie `38%`), więc nie czujesz skokowych zmian biegów. W trybie `5 biegów` sterownik trzyma stałą moc danej strefy aż do przekroczenia kolejnego progu.
+- **Podtrzymanie po wysiłku (`0 do 600 s`, domyślnie `60 s`):** gdy skończysz mocny podjazd albo zejdziesz z roweru i tętno spadnie poniżej progu `Z1`, ciało nadal oddaje dużo ciepła. Dzięki tej opcji wentylator nie wyłączy się od razu do zera, tylko będzie chłodził Cię na pierwszym biegu (`Z1`) jeszcze przez wybraną liczbę sekund.
 - **Histereza (`1 do 15 BPM`, domyślnie `3 BPM`):** zapobiega ciągłemu skakaniu obrotów w górę i w dół, gdy Twoje tętno waha się dokładnie na granicy dwóch stref. Przykładowo przy progu `125 BPM` i histerezie `3 BPM` wentylator włączy wyższy bieg przy `125 BPM`, ale zwolni dopiero wtedy, gdy tętno spadnie poniżej `122 BPM`.
 - **Filtr HR (`0 do 10000 ms`, domyślnie `2000 ms`):** wygładza chwilowe skoki odczytu z opaski. Filtr działa asymetrycznie: gdy zaczynasz mocny odcinek i tętno rośnie, reaguje czterokrotnie szybciej, a po zakończeniu interwału opada wolniej, żeby najpierw schłodzić rozgrzane ciało.
 - **Wzrost i Spadek (`1 do 100 %/s`, domyślnie `15` i `8 %/s`):** określają, o ile punktów procentowych na sekundę śmigło przyspiesza i zwalnia przy zmianie biegu, dzięki czemu silnik zmienia obroty łagodnie i bez szarpnięć.

@@ -18,6 +18,8 @@ struct Config {
     uint16_t risePerSecond = 15;
     uint16_t fallPerSecond = 8;
     uint16_t manual = 45;
+    bool smoothCurve = false;
+    uint16_t cooldownSec = 0;
 };
 
 constexpr size_t configBytes = 2 * (2 * zoneCount + 5);
@@ -84,7 +86,7 @@ public:
 private:
     void clearOutput();
     uint8_t ramp(uint16_t target, uint32_t now, uint32_t dt);
-    uint16_t autoDemand();
+    uint16_t autoDemand(uint32_t now);
 
     Config config_{};
     DriveProfile profile_{};
@@ -94,6 +96,7 @@ private:
     uint32_t measuredAt_ = 0;
     uint32_t tickAt_ = 0;
     uint32_t startAt_ = 0;
+    uint32_t activeAt_ = 0;
     HeartRate hr_{};
     float filtered_ = 0;
     float output_ = 0;
@@ -102,6 +105,7 @@ private:
     bool configOk_ = false;
     bool started_ = false;
     bool syncSeen_ = false;
+    bool cooldownActive_ = false;
 };
 
 class Backoff {

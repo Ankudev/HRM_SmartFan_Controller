@@ -224,6 +224,37 @@ void rampAndBounds() {
     assert(asym.tick(700, Drive::Ready).demand == 30);
     asym.sample(1, 1200, {95, Contact::Present});  // spadek w dół: tau = 4000 ms -> trzyma strefę Z1
     assert(asym.tick(1200, Drive::Ready).demand == 30);
+
+    // Płynna krzywa liniowa (smoothCurve) oraz podtrzymanie po wysiłku (cooldownSec).
+    Config smoothCfg;
+    smoothCfg.smoothCurve = true;
+    smoothCfg.filterMs = 0;
+    smoothCfg.risePerSecond = 100;
+    smoothCfg.fallPerSecond = 100;
+    assert(steady(smoothCfg, 105) == 30);
+    assert(steady(smoothCfg, 115) == 38);  // w połowie między Z1 (105 -> 30%) a Z2 (125 -> 45%)
+    assert(steady(smoothCfg, 125) == 45);
+    assert(steady(smoothCfg, 155) == 68);  // w połowie między Z3 (145 -> 60%) a Z4 (165 -> 75%)
+    assert(steady(smoothCfg, 210) == 95);
+
+    Control cool;
+    Config coolCfg;
+    coolCfg.filterMs = 0;
+    coolCfg.risePerSecond = 100;
+    coolCfg.fallPerSecond = 100;
+    coolCfg.cooldownSec = 60;
+    cool.configure(coolCfg, true, testDrive);
+    cool.select(Mode::Auto);
+    cool.link(1);
+    cool.tick(50, Drive::Ready);
+    hrPair(cool, 1, 5000, 110);
+    assert(cool.tick(5200, Drive::Ready).demand == 30);
+    for (uint32_t t = 6000; t <= 65000; t += 1000) {
+        cool.sample(1, t, {95, Contact::Present});
+        assert(cool.tick(t, Drive::Ready).demand == 30);  // podtrzymuje Z1 (30%) przez 60 s
+    }
+    cool.sample(1, 66000, {95, Contact::Present});
+    assert(cool.tick(66000, Drive::Ready).demand == 0);   // po upływie 60 s wygasza do 0%
     std::puts("PASS T07 T08 T10 T13 - zero, progi, histereza, limity i czas");
 }
 

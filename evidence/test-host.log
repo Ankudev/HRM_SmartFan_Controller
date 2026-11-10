@@ -19,7 +19,7 @@ test_stream_resync (test_client.SettingsTests.test_stream_resync) ... ok
 test_strict_import_and_export (test_client.SettingsTests.test_strict_import_and_export) ... ok
 
 ----------------------------------------------------------------------
-Ran 5 tests in 0.055s
+Ran 5 tests in 0.063s
 
 OK
 No broken requirements found.
