@@ -2,7 +2,7 @@
 
 Zbudowałem ten sterownik pod trenażer rowerowy (Zwift, Rouvy, MyWhoosh) oraz bieżnię. Całość działa na mikrokontrolerze **ESP32-S3**, okrągłym ekranie **GC9A01 240x240**, module regulatora fazowego **RobotDyn AC Dimmer (Z-C / PSM)** i pasie tętna **BLE Heart Rate Service (HRS)**.
 
-Układ płynnie steruje obrotami zwykłego wentylatora 230 V AC na podstawie aktualnego tętna (5 stref BPM z histerezą i filtrem) albo w trybie ręcznym (`MANUAL`). Za ułamek ceny gotowych wentylatorów smart, takich jak Wahoo Headwind, możesz więc złożyć własny, cichy nawiew, który sam reaguje na zmęczenie.
+Układ płynnie steruje obrotami zwykłego wentylatora 230 V AC na podstawie aktualnego tętna (5 stref BPM z histerezą i filtrem) albo w trybie ręcznym (`MANUAL`). Za ułamek ceny gotowych wentylatorów smart, takich jak Wahoo Headwind, możesz złożyć własny, cichy nawiew, który sam reaguje na zmęczenie.
 
 ---
 
@@ -91,7 +91,7 @@ Jeśli podczas treningu używasz na telefonie aplikacji, które wymagają intern
 
 ### 3. Aktualizacja oprogramowania przez Wi-Fi (Web OTA)
 Gdy pojawi się nowa wersja programu, nie musisz rozkręcać obudowy ani podłączać kabla USB do płytki:
-1. Pobierz na telefon lub komputer plik **`SmartFan_OTA.bin`** z zakładki **Releases** (lub z artefaktów zakładki **Actions**) na GitHubie. Jeśli kompilujesz kod samodzielnie w Arduino IDE, kliknij w menu *Sketch -> Export Compiled Binary*, a gotowy plik `.bin` pojawi się w folderze projektu.
+1. Pobierz na telefon lub komputer plik **`SmartFan_OTA.bin`** z zakładki **Releases** na GitHubie. Jeśli kompilujesz kod samodzielnie w Arduino IDE, kliknij w menu *Sketch -> Export Compiled Binary*, a gotowy plik `.bin` pojawi się w folderze projektu.
 2. Wejdź w panel sterownika (`http://192.168.4.1` lub `http://smartfan.local`) i rozwiń na samym dole zakładkę **„🔄 Aktualizacja oprogramowania (OTA)”**.
 3. Wybierz pobrany plik `.bin` i kliknij **„⬆️ Wgraj aktualizację (.bin)”**.
 4. Sterownik sam zatrzyma śmigło na czas zapisu, pokaże pasek postępu (`0 do 100%`) i po około 5 sekundach uruchomi się ponownie z nową wersją. Twój sparowany pas tętna, strefy `Z1 do Z5` oraz ustawienia domowego Wi-Fi zostają w pamięci NVS.
